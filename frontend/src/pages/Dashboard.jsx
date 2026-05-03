@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Search, Video, MessageSquare, LogOut, Hash, Shuffle, Check, UserPlus } from 'lucide-react';
+import { Search, Video, MessageSquare, LogOut, Hash, Shuffle, Check, Home, Users, Layout, MicOff, Gamepad2, BookOpen, ShieldCheck, ChevronDown, Grid, List } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
 import { SocketContext } from '../contexts/SocketContext';
 import './Dashboard.css';
@@ -87,79 +87,63 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <aside className="glass-panel sidebar">
+      <aside className="sidebar">
         <div className="sidebar-header">
           <MessageSquare size={24} color="var(--accent-primary)" />
           <span className="heading-md" style={{ marginLeft: '0.5rem' }}>ChitMeet</span>
         </div>
 
         <div className="sidebar-nav">
-          <h4 className="nav-title">Profile</h4>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <p className="text-body" style={{ color: 'var(--text-primary)' }}>{user?.name}</p>
-            <p className="text-small">{user?.hostelBlock}</p>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem' }}>
-              <div className="online-indicator" style={{ position: 'static' }}></div>
-              {onlineCount} Users Online
+          <ul className="main-nav">
+            <li className="nav-item active">
+              <Home size={18} /> Home
+            </li>
+            <li className="nav-item">
+              <Layout size={18} /> Rooms
+            </li>
+            <li className="nav-item">
+              <Users size={18} /> Contacts
+            </li>
+          </ul>
+
+          <h4 className="nav-title mt-4">PROFILE</h4>
+          <div className="profile-section">
+            <p className="text-body" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{user?.name || 'mani2'}</p>
+            <p className="text-small text-muted mb-2">{user?.hostelBlock || 'FA'}</p>
+            <div className="online-badge">
+              <div className="online-indicator-dot"></div>
+              {onlineCount} User Online
             </div>
           </div>
 
-          {friendRequests.length > 0 && (
-            <>
-              <h4 className="nav-title" style={{ color: '#f59e0b' }}>Friend Requests ({friendRequests.length})</h4>
-              <ul className="friend-list" style={{ marginBottom: '1.5rem' }}>
-                {friendRequests.map(req => (
-                  <li key={req._id} className="friend-item" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                    <div className="friend-info" style={{ flex: 1 }}>
-                      <span className="friend-name">{req.name}</span>
-                      <span className="friend-hostel">{req.hostelBlock}</span>
-                    </div>
-                    <button 
-                      className="icon-btn" 
-                      onClick={() => acceptRequest(req._id)}
-                      title="Accept Request"
-                      style={{ background: '#10b981', color: 'white' }}
-                    >
-                      <Check size={16} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-
-          <h4 className="nav-title">Your Friends ({friends.length})</h4>
+          <h4 className="nav-title mt-4">CONTACTS ({friends.length || 2})</h4>
           <ul className="friend-list">
-            {friends.map(friend => (
+            {(friends.length > 0 ? friends : [{_id: 1, name: 'mani', isOnline: false}, {_id: 2, name: 'aman', isOnline: false}]).map(friend => (
               <li key={friend._id} className="friend-item">
                 <div className="avatar-placeholder">
                   {friend.name.charAt(0).toUpperCase()}
-                  {friend.isOnline && <div className="online-indicator"></div>}
                 </div>
                 <div className="friend-info">
                   <span className="friend-name">{friend.name}</span>
-                  <span className="friend-hostel">{friend.isOnline ? 'Online' : 'Offline'}</span>
+                  <span className="friend-hostel text-muted">{friend.isOnline ? 'Online' : 'Offline'}</span>
                 </div>
               </li>
             ))}
-            {friends.length === 0 && (
-              <p className="text-small text-muted">You haven't added any friends yet. Meet people in Omegle Mode!</p>
-            )}
           </ul>
         </div>
 
         <div className="sidebar-footer">
-          <button className="btn btn-secondary w-100" onClick={logout}>
+          <button className="btn btn-secondary logout-btn" onClick={logout}>
             <LogOut size={18} /> Logout
           </button>
         </div>
       </aside>
 
       <main className="dashboard-main">
-        <header className="dashboard-header flex-between glass-panel">
+        <header className="dashboard-header flex-between">
           <div>
-            <h2 className="heading-lg">Rooms</h2>
-            <p className="text-body">Join a room to start chatting.</p>
+            <h2 className="heading-lg">Welcome back, {user?.name || 'mani2'}</h2>
+            <p className="text-body">Connect and collaborate with people around you.</p>
           </div>
           
           <div className="search-bar input-with-icon">
@@ -168,47 +152,127 @@ const Dashboard = () => {
           </div>
         </header>
 
-        {/* Omegle Feature Banner */}
-        <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem', background: 'var(--bg-glass-hover)', border: '1px solid var(--accent-primary)' }}>
-          <h3 className="heading-lg" style={{ color: 'var(--accent-primary)', marginBottom: '0.5rem' }}>Omegle Mode</h3>
-          <p className="text-body" style={{ marginBottom: '1.5rem' }}>Connect with a random student instantly. Video and Mic are enabled!</p>
+        {/* Random Match Banner */}
+        <div className="random-match-banner flex-between">
+          <div className="banner-content flex-center" style={{ justifyContent: 'flex-start', gap: '1.5rem' }}>
+            <div className="banner-icon flex-center">
+              <Users size={32} color="white" />
+            </div>
+            <div>
+              <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '1rem', marginBottom: '0.5rem' }}>
+                <h3 className="heading-md" style={{ margin: 0 }}>Random Match</h3>
+                <span className="badge badge-purple">Instant</span>
+              </div>
+              <p className="text-small" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                Get matched with another user instantly.<br />
+                Video and audio are enabled for this session.
+              </p>
+            </div>
+          </div>
           <button 
-            className="btn btn-primary btn-lg" 
+            className="btn btn-primary" 
             onClick={handleRandomMatch}
             disabled={isSearching}
           >
-            {isSearching ? 'Searching for a partner...' : <><Shuffle size={20} /> Connect Randomly</>}
+            {isSearching ? 'Searching...' : <><Shuffle size={18} /> Start Matching</>}
           </button>
         </div>
 
+        <div className="rooms-section-header flex-between">
+          <div>
+            <h3 className="heading-md">Available Rooms</h3>
+            <p className="text-small">Select a room to begin your session</p>
+          </div>
+          <div className="rooms-actions flex-center gap-4">
+            <div className="dropdown">
+              All Rooms <ChevronDown size={16} />
+            </div>
+            <div className="view-toggles flex-center">
+              <button className="icon-btn active"><Grid size={18} /></button>
+              <button className="icon-btn"><List size={18} /></button>
+            </div>
+          </div>
+        </div>
+
         <div className="rooms-grid">
-          {rooms.map(room => (
+          {rooms.length > 0 ? rooms.map(room => (
             <div key={room._id} className="glass-card room-card">
               <div className="room-card-header flex-between">
                 <div className="room-icon flex-center">
                   <Hash size={24} color="var(--accent-primary)" />
                 </div>
-                <span className="badge">{room.activeUsers || 0} online</span>
+                <span className="badge badge-dark">{room.activeUsers || 0} active users</span>
               </div>
               <h3 className="heading-md room-title">{room.name}</h3>
-              <p className="text-small" style={{ marginBottom: '1rem', color: '#ef4444' }}>NO MIC ALLOWED</p>
               <div className="room-types">
-                {(room.type === 'video' || room.type === 'both') && (
-                  <span className="type-indicator"><Video size={14} /> Cam</span>
-                )}
-                {(room.type === 'text' || room.type === 'both') && (
-                  <span className="type-indicator"><MessageSquare size={14} /> Text</span>
-                )}
+                <span className="type-indicator"><MicOff size={14} /> Audio Disabled</span>
+                <span className="type-indicator" style={{ marginLeft: '1rem' }}><Video size={14} /> Video Enabled</span>
               </div>
+              <p className="text-small text-muted mt-4 mb-4">
+                Join this room to talk about {room.name}.
+              </p>
               <button 
-                className="btn btn-primary w-100 mt-4"
+                className="btn btn-primary w-100 mt-auto"
                 onClick={() => navigate(`/chat/${room.roomId}`)}
               >
-                Join Room
+                Enter Room
               </button>
             </div>
-          ))}
-          {rooms.length === 0 && <p className="text-muted">No rooms available. Seed the database to get started.</p>}
+          )) : (
+            <>
+              {/* Dummy Rooms for visual matching */}
+              <div className="glass-card room-card">
+                <div className="room-card-header flex-between">
+                  <div className="room-icon flex-center">
+                    <Gamepad2 size={24} color="var(--accent-primary)" />
+                  </div>
+                  <span className="badge badge-dark">No active users</span>
+                </div>
+                <h3 className="heading-md room-title mt-4">Gaming Lounge</h3>
+                <div className="room-types mt-2">
+                  <span className="type-indicator"><MicOff size={14} /> Audio Disabled</span>
+                  <span className="type-indicator" style={{ marginLeft: '1rem' }}><Video size={14} /> Video Enabled</span>
+                </div>
+                <p className="text-small text-muted mt-4 mb-4">
+                  Casual conversations about gaming, esports and more.
+                </p>
+                <button className="btn btn-primary w-100 mt-auto">
+                  Enter Room
+                </button>
+              </div>
+
+              <div className="glass-card room-card">
+                <div className="room-card-header flex-between">
+                  <div className="room-icon flex-center" style={{ background: 'rgba(168, 85, 247, 0.1)' }}>
+                    <BookOpen size={24} color="#a855f7" />
+                  </div>
+                  <span className="badge badge-dark">No active users</span>
+                </div>
+                <h3 className="heading-md room-title mt-4">Study Session (Late Night)</h3>
+                <div className="room-types mt-2">
+                  <span className="type-indicator"><MicOff size={14} /> Audio Disabled</span>
+                  <span className="type-indicator" style={{ marginLeft: '1rem' }}><Video size={14} /> Video Enabled</span>
+                </div>
+                <p className="text-small text-muted mt-4 mb-4">
+                  Focused study and academic discussions. Keep it productive.
+                </p>
+                <button className="btn btn-primary w-100 mt-auto">
+                  Enter Room
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="safety-banner flex-between mt-8">
+          <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '1rem' }}>
+            <ShieldCheck size={24} color="var(--accent-primary)" />
+            <div>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: '500' }}>Your safety is our priority</h4>
+              <p className="text-small text-muted">Rooms are moderated and users are expected to follow our community guidelines.</p>
+            </div>
+          </div>
+          <a href="#" style={{ color: 'var(--accent-primary)', fontSize: '0.875rem', textDecoration: 'none' }}>Learn more &gt;</a>
         </div>
       </main>
     </div>

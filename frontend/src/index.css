@@ -2,23 +2,26 @@
 
 :root {
   /* Premium Dark Mode Color Palette */
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-glass: rgba(30, 41, 59, 0.7);
-  --bg-glass-hover: rgba(30, 41, 59, 0.9);
+  --bg-primary: #0b0f19;
+  --bg-secondary: #111827;
+  --bg-glass: rgba(17, 24, 39, 0.7);
+  --bg-glass-hover: rgba(17, 24, 39, 0.9);
+  --bg-card: rgba(30, 41, 59, 0.5);
   
-  /* Accents (Chitkara Red/Neon Vibe) */
-  --accent-primary: #ef4444;
-  --accent-hover: #dc2626;
-  --accent-glow: rgba(239, 68, 68, 0.5);
+  /* Accents (Indigo/Purple Vibe) */
+  --accent-primary: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-glow: rgba(99, 102, 241, 0.5);
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
   
   /* Text Colors */
   --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
   
   /* Borders & Shadows */
-  --border-light: rgba(255, 255, 255, 0.1);
+  --border-light: rgba(255, 255, 255, 0.08);
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -57,10 +60,10 @@ body {
 }
 
 .glass-card {
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--bg-card);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-light);
   border-radius: 12px;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
@@ -68,7 +71,7 @@ body {
 .glass-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-glow);
-  border-color: rgba(239, 68, 68, 0.3);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 /* Typography Utilities */
@@ -87,7 +90,7 @@ body {
 }
 
 .text-gradient-accent {
-  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -112,13 +115,13 @@ body {
 .btn-primary {
   background: var(--accent-primary);
   color: white;
-  box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.39);
+  box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
 }
 
 .btn-primary:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px 0 rgba(239, 68, 68, 0.23);
+  box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.23);
 }
 
 .btn-secondary {
@@ -149,7 +152,7 @@ body {
 .input-field {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-light);
   border-radius: 8px;
   color: var(--text-primary);
@@ -161,7 +164,7 @@ body {
 .input-field:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
 /* Scrollbar */
