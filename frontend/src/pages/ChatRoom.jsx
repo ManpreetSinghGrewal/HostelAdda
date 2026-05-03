@@ -18,6 +18,7 @@ const ChatRoom = () => {
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const [connectionStatus, setConnectionStatus] = useState('Waiting for partner...');
   
   const messagesEndRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -65,13 +66,13 @@ const ChatRoom = () => {
 
     const initializeMedia = async () => {
       try {
+        setConnectionStatus('Accessing camera...');
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localStreamRef.current = stream;
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
 
-        // Force disable mic in specific rooms
         if (enforceNoMic) {
           stream.getAudioTracks().forEach(track => {
             track.enabled = false;
@@ -79,11 +80,13 @@ const ChatRoom = () => {
           setIsAudioMuted(true);
         }
 
+        setConnectionStatus('Waiting for partner...');
         socket.emit('join-room', roomId);
       } catch (err) {
         console.error('Error accessing media devices', err);
+        setConnectionStatus('Camera access denied');
         alert('Could not access camera/microphone. Please check browser permissions.');
-        socket.emit('join-room', roomId); // join even without cam
+        socket.emit('join-room', roomId); 
       }
     };
 
@@ -103,7 +106,6 @@ const ChatRoom = () => {
           stream.addTrack(event.track);
         }
         
-        // Force play to overcome browser autoplay blocks
         remoteVideoRef.current.play().catch(e => console.warn('Autoplay prevented:', e));
       }
     };
@@ -119,25 +121,42 @@ const ChatRoom = () => {
       }
     };
 
+    const setupPeerConnectionEvents = (pc, peerIdTarget) => {
+      pc.ontrack = handleTrackEvent;
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('webrtc-ice-candidate', { target: peerIdTarget, candidate: event.candidate });
+        }
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        console.log('ICE Connection State:', pc.iceConnectionState);
+        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+          setConnectionStatus('Connected!');
+        } else if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+          setConnectionStatus('Connection failed (Firewall/NAT)');
+        } else if (pc.iceConnectionState === 'checking') {
+          setConnectionStatus('Connecting to partner...');
+        }
+      };
+    };
+
     // 1. Another user joined, initiate connection
     socket.on('user-joined', async (peerId) => {
       console.log('User joined, initiating WebRTC connection', peerId);
+      setConnectionStatus('Partner found, connecting...');
+      
       const peerConnection = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = peerConnection;
+
+      setupPeerConnectionEvents(peerConnection, peerId);
 
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(track => {
           peerConnection.addTrack(track, localStreamRef.current);
         });
       }
-
-      peerConnection.ontrack = handleTrackEvent;
-
-      peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-          socket.emit('webrtc-ice-candidate', { target: peerId, candidate: event.candidate });
-        }
-      };
 
       try {
         const offer = await peerConnection.createOffer();
@@ -151,22 +170,18 @@ const ChatRoom = () => {
     // 2. Received offer, create answer
     socket.on('webrtc-offer', async (data) => {
       console.log('Received offer');
+      setConnectionStatus('Receiving connection...');
+      
       const peerConnection = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = peerConnection;
+
+      setupPeerConnectionEvents(peerConnection, data.callerId);
 
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(track => {
           peerConnection.addTrack(track, localStreamRef.current);
         });
       }
-
-      peerConnection.ontrack = handleTrackEvent;
-
-      peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-          socket.emit('webrtc-ice-candidate', { target: data.callerId, candidate: event.candidate });
-        }
-      };
 
       try {
         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
@@ -203,14 +218,12 @@ const ChatRoom = () => {
           console.error('Error adding received ice candidate', e);
         }
       } else {
-        // Buffer the candidate if peerConnection or remoteDescription is not ready
         iceCandidateBuffer.current.push(candidate);
       }
     });
 
     socket.on('receive-message', (newMessage) => {
       setMessages((prev) => {
-        // Prevent duplicate messages if somehow received twice
         if (prev.some(msg => msg._id === newMessage._id || (msg.time === newMessage.time && msg.text === newMessage.text))) {
           return prev;
         }
@@ -221,6 +234,7 @@ const ChatRoom = () => {
 
     socket.on('user-left', () => {
       console.log('User left the room');
+      setConnectionStatus('Partner left the room');
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = null;
       }
@@ -274,7 +288,7 @@ const ChatRoom = () => {
   };
 
   const toggleAudio = () => {
-    if (enforceNoMic) return; // Prevent unmuting
+    if (enforceNoMic) return;
     if (localStreamRef.current) {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
@@ -310,6 +324,9 @@ const ChatRoom = () => {
             <h2 className="heading-md">
               {isOmegleMode ? 'Omegle Random Match' : `Room: ${roomId}`}
             </h2>
+            <p className="text-small" style={{ color: connectionStatus === 'Connected!' ? '#10b981' : '#f59e0b' }}>
+              {connectionStatus}
+            </p>
             {enforceNoMic && <p className="text-small" style={{ color: '#ef4444' }}>Microphone is forcibly disabled in this room.</p>}
           </div>
         </div>

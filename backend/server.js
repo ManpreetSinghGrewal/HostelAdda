@@ -32,7 +32,7 @@ let waitingUser = null; // For Omegle-style matching
 
 io.on('connection', async (socket) => {
   const userId = socket.handshake.query.userId;
-  
+
   if (userId && userId !== 'undefined') {
     console.log(`User connected: ${userId} with socket ${socket.id}`);
     await User.findByIdAndUpdate(userId, { isOnline: true });
@@ -51,7 +51,7 @@ io.on('connection', async (socket) => {
   socket.on('join-random', () => {
     if (waitingUser && waitingUser.socketId !== socket.id) {
       const roomId = 'random-' + Date.now();
-      
+
       const partnerSocket = io.sockets.sockets.get(waitingUser.socketId);
       if (partnerSocket) {
         // Send match individually so they join via ChatRoom explicitly. 
