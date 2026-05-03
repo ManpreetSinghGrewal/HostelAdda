@@ -255,14 +255,43 @@
 @media (max-width: 900px) {
   .chatroom-body {
     flex-direction: column;
+    padding: 0;
+    gap: 0;
+  }
+  .chatroom-header {
+    padding: 1rem;
+  }
+  .heading-md {
+    font-size: 1rem;
   }
   .chat-area {
     max-width: 100%;
     flex: 1;
-    min-height: 300px;
+    min-height: 250px;
+    border-radius: 0;
+    border-top: 1px solid var(--border-light);
   }
   .video-area {
-    flex: 1;
-    min-height: 400px;
+    flex: auto;
+    min-height: 300px;
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+  .video-grid {
+    border-radius: 8px;
+  }
+  .local-video-pip {
+    width: 100px;
+    height: 75px;
+    bottom: 0.5rem;
+    right: 0.5rem;
+  }
+  .video-controls {
+    margin-bottom: 0;
+    padding: 0.5rem;
+  }
+  .control-btn {
+    width: 40px;
+    height: 40px;
   }
 }
