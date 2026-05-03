@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const roomRoutes = require('./routes/roomRoutes');
+const userRoutes = require('./routes/userRoutes');
 const Message = require('./models/Message');
 const User = require('./models/User');
 
@@ -17,17 +18,26 @@ connectDB();
 
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/users', userRoutes);
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*', // For development
+    origin: '*',
     methods: ['GET', 'POST']
   }
 });
 
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+io.on('connection', async (socket) => {
+  const userId = socket.handshake.query.userId;
+  
+  if (userId && userId !== 'undefined') {
+    console.log(`User connected: ${userId} with socket ${socket.id}`);
+    await User.findByIdAndUpdate(userId, { isOnline: true });
+    io.emit('user-online', userId);
+  } else {
+    console.log('Anonymous connected:', socket.id);
+  }
 
   socket.on('join-room', (roomId) => {
     socket.join(roomId);
@@ -57,12 +67,16 @@ io.on('connection', (socket) => {
     socket.to(data.roomId).emit('webrtc-ice-candidate', data);
   });
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+  socket.on('disconnect', async () => {
+    if (userId && userId !== 'undefined') {
+      console.log(`User disconnected: ${userId}`);
+      await User.findByIdAndUpdate(userId, { isOnline: false });
+      io.emit('user-offline', userId);
+    }
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

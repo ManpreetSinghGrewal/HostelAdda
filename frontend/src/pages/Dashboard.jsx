@@ -3,29 +3,60 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Search, Video, MessageSquare, LogOut, Hash } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
+import { SocketContext } from '../contexts/SocketContext';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const [rooms, setRooms] = useState([]);
+  const [onlineFriends, setOnlineFriends] = useState([]);
   const navigate = useNavigate();
   const { user, logout } = useContext(AuthContext);
+  const socket = useContext(SocketContext);
+
+  const fetchRooms = async () => {
+    try {
+      const { data } = await axios.get('http://localhost:5001/api/rooms');
+      setRooms(data);
+    } catch (error) {
+      console.error('Error fetching rooms', error);
+    }
+  };
+
+  const fetchOnlineUsers = async () => {
+    try {
+      const { data } = await axios.get('http://localhost:5001/api/users/online');
+      // Filter out the current user so they don't see themselves in the online friends list
+      setOnlineFriends(data.filter(u => u._id !== user?._id));
+    } catch (error) {
+      console.error('Error fetching online users', error);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    
-    const fetchRooms = async () => {
-      try {
-        const { data } = await axios.get('http://localhost:5001/api/rooms');
-        setRooms(data);
-      } catch (error) {
-        console.error('Error fetching rooms', error);
-      }
-    };
     fetchRooms();
+    fetchOnlineUsers();
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (socket) {
+      const handleUserStatusChange = () => {
+        // Simple strategy: refetch the list when anyone comes online or goes offline
+        fetchOnlineUsers();
+      };
+
+      socket.on('user-online', handleUserStatusChange);
+      socket.on('user-offline', handleUserStatusChange);
+
+      return () => {
+        socket.off('user-online', handleUserStatusChange);
+        socket.off('user-offline', handleUserStatusChange);
+      };
+    }
+  }, [socket, user]);
 
   return (
     <div className="dashboard-container">
@@ -38,9 +69,28 @@ const Dashboard = () => {
         <div className="sidebar-nav">
           <h4 className="nav-title">Profile</h4>
           <div style={{ marginBottom: '2rem' }}>
-            <p className="text-body">{user?.name}</p>
+            <p className="text-body" style={{ color: 'var(--text-primary)' }}>{user?.name}</p>
             <p className="text-small">{user?.hostelBlock}</p>
           </div>
+
+          <h4 className="nav-title">Online Friends ({onlineFriends.length})</h4>
+          <ul className="friend-list">
+            {onlineFriends.map(friend => (
+              <li key={friend._id} className="friend-item">
+                <div className="avatar-placeholder">
+                  {friend.name.charAt(0).toUpperCase()}
+                  <div className="online-indicator"></div>
+                </div>
+                <div className="friend-info">
+                  <span className="friend-name">{friend.name}</span>
+                  <span className="friend-hostel">{friend.hostelBlock}</span>
+                </div>
+              </li>
+            ))}
+            {onlineFriends.length === 0 && (
+              <p className="text-small">No one else is online right now.</p>
+            )}
+          </ul>
         </div>
 
         <div className="sidebar-footer">

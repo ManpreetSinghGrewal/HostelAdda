@@ -61,10 +61,10 @@ const Auth = () => {
           )}
 
           <div className="input-group">
-            <label className="input-label">University Email</label>
+            <label className="input-label">Email Address</label>
             <div className="input-with-icon">
               <Mail size={18} className="input-icon" />
-              <input type="email" name="email" className="input-field" placeholder="student@chitkara.edu.in" onChange={handleChange} required />
+              <input type="email" name="email" className="input-field" placeholder="your@email.com" onChange={handleChange} required />
             </div>
           </div>
 

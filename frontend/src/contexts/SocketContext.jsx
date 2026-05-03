@@ -10,7 +10,9 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     if (user) {
-      const newSocket = io('http://localhost:5001');
+      const newSocket = io('http://localhost:5001', {
+        query: { userId: user._id }
+      });
       setSocket(newSocket);
 
       return () => newSocket.close();
