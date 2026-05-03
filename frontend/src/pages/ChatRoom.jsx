@@ -24,6 +24,7 @@ const ChatRoom = () => {
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
+  const iceCandidateBuffer = useRef([]);
 
   const isOmegleMode = roomId.startsWith('random-');
   const noMicRooms = ['gaming', 'study'];
@@ -81,7 +82,7 @@ const ChatRoom = () => {
         socket.emit('join-room', roomId);
       } catch (err) {
         console.error('Error accessing media devices', err);
-        alert('Could not access camera/microphone. Please check permissions.');
+        alert('Could not access camera/microphone. Please check browser permissions.');
         socket.emit('join-room', roomId); // join even without cam
       }
     };
@@ -89,17 +90,31 @@ const ChatRoom = () => {
     initializeMedia();
 
     const handleTrackEvent = (event) => {
+      console.log('Received remote track', event);
       if (remoteVideoRef.current) {
         if (event.streams && event.streams[0]) {
           remoteVideoRef.current.srcObject = event.streams[0];
         } else {
-          // Fallback for some browsers
           let stream = remoteVideoRef.current.srcObject;
           if (!stream) {
             stream = new MediaStream();
             remoteVideoRef.current.srcObject = stream;
           }
           stream.addTrack(event.track);
+        }
+        
+        // Force play to overcome browser autoplay blocks
+        remoteVideoRef.current.play().catch(e => console.warn('Autoplay prevented:', e));
+      }
+    };
+
+    const flushIceCandidateBuffer = async (pc) => {
+      while (iceCandidateBuffer.current.length > 0) {
+        const candidate = iceCandidateBuffer.current.shift();
+        try {
+          await pc.addIceCandidate(candidate);
+        } catch (e) {
+          console.error('Error adding buffered ICE candidate', e);
         }
       }
     };
@@ -155,6 +170,8 @@ const ChatRoom = () => {
 
       try {
         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        await flushIceCandidateBuffer(peerConnection);
+        
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
         socket.emit('webrtc-answer', { target: data.callerId, sdp: answer });
@@ -169,6 +186,7 @@ const ChatRoom = () => {
       if (peerConnectionRef.current) {
         try {
           await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          await flushIceCandidateBuffer(peerConnectionRef.current);
         } catch (e) {
           console.error('Error setting remote description from answer', e);
         }
@@ -177,12 +195,16 @@ const ChatRoom = () => {
 
     // 4. Received ICE candidate
     socket.on('webrtc-ice-candidate', async (data) => {
-      if (peerConnectionRef.current) {
+      const candidate = new RTCIceCandidate(data.candidate);
+      if (peerConnectionRef.current && peerConnectionRef.current.remoteDescription) {
         try {
-          await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+          await peerConnectionRef.current.addIceCandidate(candidate);
         } catch (e) {
           console.error('Error adding received ice candidate', e);
         }
+      } else {
+        // Buffer the candidate if peerConnection or remoteDescription is not ready
+        iceCandidateBuffer.current.push(candidate);
       }
     });
 
@@ -247,7 +269,6 @@ const ChatRoom = () => {
     };
 
     socket.emit('send-message', messageData);
-    // Removed the optimistic update so the message only appears once when received from the server
     setMessage('');
     scrollToBottom();
   };
