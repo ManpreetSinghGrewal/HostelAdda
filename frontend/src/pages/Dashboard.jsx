@@ -6,6 +6,8 @@ import { AuthContext } from '../contexts/AuthContext';
 import { SocketContext } from '../contexts/SocketContext';
 import './Dashboard.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 const Dashboard = () => {
   const [rooms, setRooms] = useState([]);
   const [onlineFriends, setOnlineFriends] = useState([]);
@@ -16,7 +18,7 @@ const Dashboard = () => {
 
   const fetchRooms = async () => {
     try {
-      const { data } = await axios.get('http://localhost:5001/api/rooms');
+      const { data } = await axios.get(`${API_URL}/api/rooms`);
       setRooms(data);
     } catch (error) {
       console.error('Error fetching rooms', error);
@@ -25,7 +27,7 @@ const Dashboard = () => {
 
   const fetchOnlineUsers = async () => {
     try {
-      const { data } = await axios.get('http://localhost:5001/api/users/online');
+      const { data } = await axios.get(`${API_URL}/api/users/online`);
       setOnlineFriends(data.filter(u => u._id !== user?._id));
     } catch (error) {
       console.error('Error fetching online users', error);

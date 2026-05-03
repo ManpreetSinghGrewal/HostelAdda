@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -17,7 +19,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const { data } = await axios.post('http://localhost:5001/api/auth/login', { email, password });
+      const { data } = await axios.post(`${API_URL}/api/auth/login`, { email, password });
       setUser(data);
       localStorage.setItem('userInfo', JSON.stringify(data));
       navigate('/dashboard');
@@ -29,7 +31,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password, hostelBlock) => {
     try {
-      const { data } = await axios.post('http://localhost:5001/api/auth/register', { name, email, password, hostelBlock });
+      const { data } = await axios.post(`${API_URL}/api/auth/register`, { name, email, password, hostelBlock });
       setUser(data);
       localStorage.setItem('userInfo', JSON.stringify(data));
       navigate('/dashboard');

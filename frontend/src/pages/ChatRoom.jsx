@@ -6,6 +6,8 @@ import { AuthContext } from '../contexts/AuthContext';
 import { SocketContext } from '../contexts/SocketContext';
 import './ChatRoom.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 const ChatRoom = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
@@ -36,7 +38,7 @@ const ChatRoom = () => {
     if (!isOmegleMode) {
       const fetchMessages = async () => {
         try {
-          const { data } = await axios.get(`http://localhost:5001/api/rooms/${roomId}/messages`);
+          const { data } = await axios.get(`${API_URL}/api/rooms/${roomId}/messages`);
           setMessages(data);
           scrollToBottom();
         } catch (error) {
