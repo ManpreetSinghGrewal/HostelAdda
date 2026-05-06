@@ -69,10 +69,17 @@ const Dashboard = () => {
         navigate(`/chat/${data.roomId}`, { state: { partnerUserId: data.partnerUserId, partnerName: data.partnerName } });
       });
 
+      socket.on('room-count-updated', (data) => {
+        setRooms(prevRooms => prevRooms.map(room => 
+          room.roomId === data.roomId ? { ...room, activeUsers: data.count } : room
+        ));
+      });
+
       return () => {
         socket.off('user-online', handleUserStatusChange);
         socket.off('user-offline', handleUserStatusChange);
         socket.off('match-found');
+        socket.off('room-count-updated');
       };
     }
   }, [socket, navigate]);

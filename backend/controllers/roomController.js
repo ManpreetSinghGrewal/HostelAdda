@@ -8,7 +8,7 @@ const getRooms = async (req, res) => {
     
     const roomsWithCounts = rooms.map(room => {
       const roomObj = room.toObject();
-      const activeCount = io.sockets.adapter.rooms.get(roomObj.id)?.size || 0;
+      const activeCount = io.sockets.adapter.rooms.get(roomObj.roomId)?.size || 0;
       return { ...roomObj, activeUsers: activeCount };
     });
 

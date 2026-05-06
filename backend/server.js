@@ -28,28 +28,18 @@ const io = new Server(server, {
   }
 });
 
-// Make io accessible in controllers
+// Make io accessible to routers
 app.set('io', io);
 
 let waitingUser = null; // For Omegle-style matching
-
-// Track number of active sockets per user to handle multiple tabs & refreshes
-const userConnectionCounts = new Map();
 
 io.on('connection', async (socket) => {
   const userId = socket.handshake.query.userId;
 
   if (userId && userId !== 'undefined') {
-    const currentCount = (userConnectionCounts.get(userId) || 0) + 1;
-    userConnectionCounts.set(userId, currentCount);
-    
-    console.log(`User connected: ${userId} with socket ${socket.id}. Active connections: ${currentCount}`);
-    
-    // Only set to online if this is their first connection
-    if (currentCount === 1) {
-      await User.findByIdAndUpdate(userId, { isOnline: true });
-      io.emit('user-online', userId);
-    }
+    console.log(`User connected: ${userId} with socket ${socket.id}`);
+    await User.findByIdAndUpdate(userId, { isOnline: true });
+    io.emit('user-online', userId);
   }
 
   // Normal Room Join
@@ -62,6 +52,12 @@ io.on('connection', async (socket) => {
     console.log(`Socket ${socket.id} joined room ${roomId}`);
     // Notify others in room so they can initiate WebRTC offer
     socket.to(roomId).emit('user-joined', { socketId: socket.id, userId: roomUserId });
+    
+    // Broadcast updated room count to all clients
+    const room = io.sockets.adapter.rooms.get(roomId);
+    if (room && !roomId.startsWith('random-')) {
+      io.emit('room-count-updated', { roomId, count: room.size });
+    }
   });
 
   // Random Matchmaking (Omegle style)
@@ -102,6 +98,11 @@ io.on('connection', async (socket) => {
           console.error('Error clearing empty room chat', error);
         }
       }
+    }
+    
+    // Broadcast updated room count to all clients
+    if (!roomId.startsWith('random-')) {
+      io.emit('room-count-updated', { roomId, count: room ? room.size : 0 });
     }
   });
 
@@ -163,23 +164,19 @@ io.on('connection', async (socket) => {
             }
           }
         }
+        
+        if (!roomId.startsWith('random-')) {
+          io.emit('room-count-updated', { roomId, count: room ? room.size - 1 : 0 });
+        }
       }
     }
   });
 
   socket.on('disconnect', async () => {
     if (userId && userId !== 'undefined') {
-      const currentCount = (userConnectionCounts.get(userId) || 0) - 1;
-      
-      if (currentCount <= 0) {
-        userConnectionCounts.delete(userId);
-        console.log(`User completely disconnected: ${userId}`);
-        await User.findByIdAndUpdate(userId, { isOnline: false });
-        io.emit('user-offline', userId);
-      } else {
-        userConnectionCounts.set(userId, currentCount);
-        console.log(`User socket disconnected: ${userId}. Remaining connections: ${currentCount}`);
-      }
+      console.log(`User disconnected: ${userId}`);
+      await User.findByIdAndUpdate(userId, { isOnline: false });
+      io.emit('user-offline', userId);
     }
   });
 });
