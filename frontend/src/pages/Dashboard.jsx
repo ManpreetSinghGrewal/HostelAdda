@@ -144,9 +144,9 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <h4 className="nav-title mt-4">CONTACTS ({friends.length || 2})</h4>
+          <h4 className="nav-title mt-4">CONTACTS ({friends.length})</h4>
           <ul className="friend-list">
-            {(friends.length > 0 ? friends : [{_id: 1, name: 'mani', isOnline: false}, {_id: 2, name: 'aman', isOnline: false}]).map(friend => (
+            {friends.map(friend => (
               <li key={friend._id} className="friend-item">
                 <div className="avatar-placeholder">
                   {friend.name.charAt(0).toUpperCase()}
