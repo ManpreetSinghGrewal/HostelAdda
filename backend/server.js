@@ -28,6 +28,9 @@ const io = new Server(server, {
   }
 });
 
+// Make io accessible in controllers
+app.set('io', io);
+
 let waitingUser = null; // For Omegle-style matching
 
 // Track number of active sockets per user to handle multiple tabs & refreshes
