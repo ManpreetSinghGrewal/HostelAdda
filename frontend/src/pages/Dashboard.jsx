@@ -13,6 +13,8 @@ const Dashboard = () => {
   const [friends, setFriends] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
   const [onlineCount, setOnlineCount] = useState(0);
+  const [onlineMaleCount, setOnlineMaleCount] = useState(0);
+  const [onlineFemaleCount, setOnlineFemaleCount] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editName, setEditName] = useState('');
@@ -36,6 +38,8 @@ const Dashboard = () => {
       
       setRooms(roomsRes.data);
       setOnlineCount(countRes.data.count);
+      setOnlineMaleCount(countRes.data.maleCount || 0);
+      setOnlineFemaleCount(countRes.data.femaleCount || 0);
       setFriends(friendsRes.data.friends || []);
       setFriendRequests(friendsRes.data.friendRequests || []);
     } catch (error) {
@@ -126,7 +130,7 @@ const Dashboard = () => {
             </button>
             <div className="online-badge" style={{ marginLeft: '1rem' }}>
               <div className="online-indicator-dot"></div>
-              {onlineCount} User{onlineCount !== 1 ? 's' : ''} Online
+              {onlineCount} Online (👨 {onlineMaleCount} 👩 {onlineFemaleCount})
             </div>
           </div>
           
@@ -159,7 +163,7 @@ const Dashboard = () => {
               </div>
               <div className="online-badge mt-2">
                 <div className="online-indicator-dot"></div>
-                {onlineCount} User{onlineCount !== 1 ? 's' : ''} Online
+                {onlineCount} Online (👨 {onlineMaleCount} 👩 {onlineFemaleCount})
               </div>
             </div>
 

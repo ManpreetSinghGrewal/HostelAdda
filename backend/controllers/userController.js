@@ -11,8 +11,11 @@ const getOnlineUsers = async (req, res) => {
 
 const getOnlineCount = async (req, res) => {
   try {
-    const count = await User.countDocuments({ isOnline: true });
-    res.json({ count });
+    const totalCount = await User.countDocuments({ isOnline: true });
+    const maleCount = await User.countDocuments({ isOnline: true, gender: 'Male' });
+    const femaleCount = await User.countDocuments({ isOnline: true, gender: 'Female' });
+    const othersCount = await User.countDocuments({ isOnline: true, gender: 'Others' });
+    res.json({ count: totalCount, maleCount, femaleCount, othersCount });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
