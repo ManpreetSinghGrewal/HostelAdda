@@ -131,7 +131,7 @@ const Dashboard = () => {
           </div>
           
           <button className="icon-btn mobile-menu-toggle" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-            <MoreVertical size={24} color="white" />
+            <MoreVertical size={24} color="var(--text-primary)" />
           </button>
         </div>
       </header>
@@ -244,7 +244,7 @@ const Dashboard = () => {
         <div className="random-match-banner flex-between">
           <div className="banner-content flex-center" style={{ justifyContent: 'flex-start', gap: '1.5rem' }}>
             <div className="banner-icon flex-center">
-              <Users size={32} color="white" />
+              <Users size={32} color="var(--accent-primary)" />
             </div>
             <div>
               <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '1rem', marginBottom: '0.5rem' }}>
