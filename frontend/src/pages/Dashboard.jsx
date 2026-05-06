@@ -63,8 +63,8 @@ const Dashboard = () => {
 
       socket.on('match-found', (data) => {
         setIsSearching(false);
-        // data contains roomId and partnerUserId
-        navigate(`/chat/${data.roomId}`, { state: { partnerUserId: data.partnerUserId } });
+        // data contains roomId, partnerUserId, partnerName
+        navigate(`/chat/${data.roomId}`, { state: { partnerUserId: data.partnerUserId, partnerName: data.partnerName } });
       });
 
       return () => {
@@ -76,9 +76,9 @@ const Dashboard = () => {
   }, [socket, navigate]);
 
   const handleRandomMatch = () => {
-    if (socket) {
+    if (socket && user) {
       setIsSearching(true);
-      socket.emit('join-random');
+      socket.emit('join-random', user.name);
     }
   };
 

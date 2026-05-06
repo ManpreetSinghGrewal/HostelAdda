@@ -52,23 +52,23 @@ io.on('connection', async (socket) => {
   });
 
   // Random Matchmaking (Omegle style)
-  socket.on('join-random', () => {
+  socket.on('join-random', (userName) => {
     if (waitingUser && waitingUser.socketId !== socket.id) {
       const roomId = 'random-' + Date.now();
       
       const partnerSocket = io.sockets.sockets.get(waitingUser.socketId);
       if (partnerSocket) {
         // Send match individually so they join via ChatRoom explicitly. 
-        socket.emit('match-found', { roomId, partnerUserId: waitingUser.userId });
-        partnerSocket.emit('match-found', { roomId, partnerUserId: userId });
+        socket.emit('match-found', { roomId, partnerUserId: waitingUser.userId, partnerName: waitingUser.userName });
+        partnerSocket.emit('match-found', { roomId, partnerUserId: userId, partnerName: userName });
       } else {
         // Partner disconnected while waiting, put this user in queue
-        waitingUser = { socketId: socket.id, userId };
+        waitingUser = { socketId: socket.id, userId, userName };
         return;
       }
       waitingUser = null;
     } else {
-      waitingUser = { socketId: socket.id, userId };
+      waitingUser = { socketId: socket.id, userId, userName };
     }
   });
 

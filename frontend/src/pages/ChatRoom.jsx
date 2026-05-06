@@ -24,8 +24,9 @@ const ChatRoom = () => {
   const [friendRequestSent, setFriendRequestSent] = useState(false);
   const [isSearchingNext, setIsSearchingNext] = useState(false);
 
-  // Omegle specific partner ID
+  // Omegle specific partner ID & Name
   const partnerUserId = location.state?.partnerUserId || null;
+  const [partnerName, setPartnerName] = useState(location.state?.partnerName || 'Partner');
   
   const messagesEndRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -282,7 +283,8 @@ const ChatRoom = () => {
 
     socket.on('match-found', (data) => {
       setIsSearchingNext(false);
-      navigate(`/chat/${data.roomId}`, { state: { partnerUserId: data.partnerUserId }, replace: true });
+      setPartnerName(data.partnerName || 'Partner');
+      navigate(`/chat/${data.roomId}`, { state: { partnerUserId: data.partnerUserId, partnerName: data.partnerName }, replace: true });
     });
 
     socket.on('user-left', (peerId) => {
@@ -375,7 +377,7 @@ const ChatRoom = () => {
     iceCandidateBuffers.current.clear();
     setIsSearchingNext(true);
     setConnectionStatus('Searching for next person...');
-    socket.emit('join-random');
+    socket.emit('join-random', user.name);
   };
 
   const handleSendFriendRequest = async () => {
@@ -462,7 +464,7 @@ const ChatRoom = () => {
                     }
                   }}
                 ></video>
-                <div className="participant-label">Partner</div>
+                <div className="participant-label">{partnerName}</div>
               </div>
             ))}
 
