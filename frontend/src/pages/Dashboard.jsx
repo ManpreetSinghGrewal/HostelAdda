@@ -233,11 +233,6 @@ const Dashboard = () => {
             <h2 className="heading-lg">Welcome back, {user?.name}</h2>
             <p className="text-body">Connect and collaborate with people around you.</p>
           </div>
-          
-          <div className="search-bar input-with-icon">
-            <Search size={18} className="input-icon" />
-            <input type="text" className="input-field" placeholder="Search rooms or people..." />
-          </div>
         </header>
 
         {/* Random Match Banner */}
