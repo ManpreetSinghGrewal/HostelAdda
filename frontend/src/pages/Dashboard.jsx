@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Search, Video, MessageSquare, LogOut, Hash, Shuffle, Check, Home, Users, Layout, MicOff, Gamepad2, BookOpen, ShieldCheck, ChevronDown, Grid, List, Edit2, X } from 'lucide-react';
+import { Search, Video, MessageSquare, LogOut, Hash, Shuffle, Check, Home, Users, Layout, MicOff, Gamepad2, BookOpen, ShieldCheck, ChevronDown, Grid, List, Edit2, X, MoreVertical } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
 import { SocketContext } from '../contexts/SocketContext';
 import './Dashboard.css';
@@ -18,6 +18,7 @@ const Dashboard = () => {
   const [editName, setEditName] = useState('');
   const [editHostel, setEditHostel] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const navigate = useNavigate();
   const { user, logout, updateProfile } = useContext(AuthContext);
@@ -110,65 +111,84 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <aside className="sidebar">
-        <div className="sidebar-header">
+      {/* Top Navbar */}
+      <header className="top-navbar glass-panel">
+        <div className="navbar-left flex-center">
           <MessageSquare size={24} color="var(--accent-primary)" />
           <span className="heading-md" style={{ marginLeft: '0.5rem' }}>ChitMeet</span>
         </div>
-
-        <div className="sidebar-nav">
-          <ul className="main-nav">
-            <li className="nav-item active">
+        
+        <div className="navbar-right flex-center">
+          {/* Desktop Nav Items */}
+          <div className="desktop-nav">
+            <button className="btn btn-secondary" onClick={() => navigate('/')}>
               <Home size={18} /> Home
-            </li>
-            <li className="nav-item">
-              <Layout size={18} /> Rooms
-            </li>
-            <li className="nav-item">
-              <Users size={18} /> Contacts
-            </li>
-          </ul>
-
-          <div className="flex-between mt-4">
-            <h4 className="nav-title" style={{ margin: 0 }}>PROFILE</h4>
-            <button className="icon-btn" onClick={openEditProfile} title="Edit Profile">
-              <Edit2 size={14} />
             </button>
-          </div>
-          <div className="profile-section" style={{ marginTop: '0.5rem' }}>
-            <p className="text-body" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{user?.name}</p>
-            <p className="text-small text-muted mb-2">{user?.hostelBlock}</p>
-            <div className="online-badge">
+            <div className="online-badge" style={{ marginLeft: '1rem' }}>
               <div className="online-indicator-dot"></div>
               {onlineCount} User{onlineCount !== 1 ? 's' : ''} Online
             </div>
           </div>
-
-          <h4 className="nav-title mt-4">CONTACTS ({friends.length})</h4>
-          <ul className="friend-list">
-            {friends.map(friend => (
-              <li key={friend._id} className="friend-item">
-                <div className="avatar-placeholder">
-                  {friend.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="friend-info">
-                  <span className="friend-name">{friend.name}</span>
-                  <span className="friend-hostel text-muted">{friend.isOnline ? 'Online' : 'Offline'}</span>
-                </div>
-              </li>
-            ))}
-            {friends.length === 0 && (
-              <p className="text-small text-muted">You haven't added any friends yet. Meet people in Chitmeet Random Mode!</p>
-            )}
-          </ul>
-        </div>
-
-        <div className="sidebar-footer">
-          <button className="btn btn-secondary logout-btn" onClick={logout}>
-            <LogOut size={18} /> Logout
+          
+          <button className="icon-btn mobile-menu-toggle" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+            <MoreVertical size={24} color="white" />
           </button>
         </div>
-      </aside>
+      </header>
+
+      {/* Mobile/Three-dot Dropdown Menu */}
+      {isMobileMenuOpen && (
+        <div className="mobile-menu-overlay" onClick={() => setIsMobileMenuOpen(false)}>
+          <div className="mobile-menu-dropdown glass-card" onClick={e => e.stopPropagation()}>
+            <div className="flex-between mb-4">
+              <h3 className="heading-md" style={{ margin: 0 }}>Menu</h3>
+              <button className="icon-btn" onClick={() => setIsMobileMenuOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="profile-section mb-4">
+              <div className="flex-between">
+                <div>
+                  <p className="text-body" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{user?.name}</p>
+                  <p className="text-small text-muted">{user?.hostelBlock}</p>
+                </div>
+                <button className="icon-btn" onClick={() => { setIsMobileMenuOpen(false); openEditProfile(); }} title="Edit Profile">
+                  <Edit2 size={16} />
+                </button>
+              </div>
+              <div className="online-badge mt-2">
+                <div className="online-indicator-dot"></div>
+                {onlineCount} User{onlineCount !== 1 ? 's' : ''} Online
+              </div>
+            </div>
+
+            <h4 className="nav-title mt-4">CONTACTS ({friends.length})</h4>
+            <ul className="friend-list mb-4">
+              {friends.map(friend => (
+                <li key={friend._id} className="friend-item">
+                  <div className="avatar-placeholder">
+                    {friend.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="friend-info">
+                    <span className="friend-name">{friend.name}</span>
+                    <span className="friend-hostel text-muted">{friend.isOnline ? 'Online' : 'Offline'}</span>
+                  </div>
+                </li>
+              ))}
+              {friends.length === 0 && (
+                <p className="text-small text-muted">You haven't added any friends yet. Meet people in Chitmeet Random Mode!</p>
+              )}
+            </ul>
+
+            <div className="menu-actions mt-auto">
+              <button className="btn btn-secondary logout-btn w-100" onClick={logout}>
+                <LogOut size={18} /> Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="dashboard-main">
         {/* Edit Profile Modal */}

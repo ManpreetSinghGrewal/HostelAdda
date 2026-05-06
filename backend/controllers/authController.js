@@ -6,7 +6,7 @@ const generateToken = (id) => {
 };
 
 const registerUser = async (req, res) => {
-  const { name, email, password, hostelBlock } = req.body;
+  const { name, email, password, gender, hostelBlock } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -14,13 +14,14 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const user = await User.create({ name, email, password, hostelBlock });
+    const user = await User.create({ name, email, password, gender, hostelBlock });
     
     if (user) {
       res.status(201).json({
         _id: user._id,
         name: user.name,
         email: user.email,
+        gender: user.gender,
         hostelBlock: user.hostelBlock,
         token: generateToken(user._id)
       });
@@ -43,6 +44,7 @@ const loginUser = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        gender: user.gender,
         hostelBlock: user.hostelBlock,
         token: generateToken(user._id)
       });

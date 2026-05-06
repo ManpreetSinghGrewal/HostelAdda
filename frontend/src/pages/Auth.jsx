@@ -6,8 +6,16 @@ import './Auth.css';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', hostelBlock: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', gender: '', hostelBlock: '' });
   const [error, setError] = useState('');
+  
+  const maleHostels = ['FRANKLIN-A', 'FRANKLIN-B', 'archimedies-A', 'archimedies-B', 'armstrong', 'magellan', 'marcopolo'];
+  const femaleHostels = ['NGH-A', 'NGH-B', 'vasco', 'columbus', 'IBN-A', 'IBN-B', 'IBN-C', 'PIE-A', 'PIE-B', 'PIE-C'];
+
+  let availableHostels = [];
+  if (formData.gender === 'Male') availableHostels = maleHostels;
+  else if (formData.gender === 'Female') availableHostels = femaleHostels;
+  else if (formData.gender === 'Others') availableHostels = [...maleHostels, ...femaleHostels];
   
   const navigate = useNavigate();
   const { login, register } = useContext(AuthContext);
@@ -22,7 +30,7 @@ const Auth = () => {
     if (isLogin) {
       res = await login(formData.email, formData.password);
     } else {
-      res = await register(formData.name, formData.email, formData.password, formData.hostelBlock);
+      res = await register(formData.name, formData.email, formData.password, formData.gender, formData.hostelBlock);
     }
 
     if (!res.success) {
@@ -51,10 +59,31 @@ const Auth = () => {
                 </div>
               </div>
               <div className="input-group">
+                <label className="input-label">Gender</label>
+                <div className="input-with-icon">
+                  <User size={18} className="input-icon" />
+                  <select name="gender" className="input-field" value={formData.gender} onChange={handleChange} required style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+                    <option value="" disabled>Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+              </div>
+              <div className="input-group">
                 <label className="input-label">Hostel Name & Block</label>
                 <div className="input-with-icon">
                   <Building size={18} className="input-icon" />
-                  <input type="text" name="hostelBlock" className="input-field" placeholder="e.g. Tagore Block A" onChange={handleChange} required />
+                  {formData.gender ? (
+                    <select name="hostelBlock" className="input-field" value={formData.hostelBlock} onChange={handleChange} required style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+                      <option value="" disabled>Select Hostel</option>
+                      {availableHostels.map(hostel => (
+                        <option key={hostel} value={hostel}>{hostel}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input type="text" className="input-field" placeholder="Select Gender First" disabled style={{ opacity: 0.7 }} />
+                  )}
                 </div>
               </div>
             </>

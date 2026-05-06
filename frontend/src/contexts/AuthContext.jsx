@@ -29,9 +29,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password, hostelBlock) => {
+  const register = async (name, email, password, gender, hostelBlock) => {
     try {
-      const { data } = await axios.post(`${API_URL}/api/auth/register`, { name, email, password, hostelBlock });
+      const { data } = await axios.post(`${API_URL}/api/auth/register`, { name, email, password, gender, hostelBlock });
       setUser(data);
       localStorage.setItem('userInfo', JSON.stringify(data));
       navigate('/dashboard');

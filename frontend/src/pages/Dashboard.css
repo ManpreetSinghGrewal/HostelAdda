@@ -1,61 +1,63 @@
 .dashboard-container {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
   background: var(--bg-primary);
 }
 
-.sidebar {
-  width: 260px;
-  height: 100%;
+.top-navbar {
   display: flex;
-  flex-direction: column;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border-light);
-  z-index: 10;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border-light);
+  border-radius: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+  flex-shrink: 0;
 }
 
-.sidebar-header {
-  padding: 1.5rem;
+.desktop-nav {
   display: flex;
   align-items: center;
 }
 
-.sidebar-nav {
-  flex: 1;
-  padding: 0 1.5rem 1.5rem 1.5rem;
+.mobile-menu-toggle {
+  margin-left: 1rem;
+}
+
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mobile-menu-dropdown {
+  width: 300px;
+  max-width: 80vw;
+  height: 100%;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-light);
+  border-radius: 0;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.3s ease forwards;
   overflow-y: auto;
 }
 
-.main-nav {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  color: var(--text-secondary);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
-}
-
-.nav-item.active {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
 .nav-title {
@@ -133,8 +135,9 @@
   color: var(--text-primary);
 }
 
-.sidebar-footer {
-  padding: 1.5rem;
+.menu-actions {
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-light);
 }
 
 .logout-btn {
@@ -282,23 +285,11 @@
 .gap-4 { gap: 1rem; }
 
 @media (max-width: 900px) {
-  .dashboard-container {
-    flex-direction: column;
-    overflow-y: auto;
-  }
-  .sidebar {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border-light);
-    flex: none;
-  }
-  .sidebar-nav {
-    max-height: 250px;
-  }
   .dashboard-main {
-    overflow-y: visible;
     padding: 1.5rem;
+  }
+  .desktop-nav {
+    display: none;
   }
   .dashboard-header {
     flex-direction: column;
@@ -315,5 +306,8 @@
   }
   .rooms-grid {
     grid-template-columns: 1fr;
+  }
+  .top-navbar {
+    padding: 1rem;
   }
 }
