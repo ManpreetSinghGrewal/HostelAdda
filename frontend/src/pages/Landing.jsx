@@ -15,7 +15,7 @@ const Landing = () => {
 
       <nav className="glass-panel navbar flex-between">
         <div className="logo flex-center">
-          <MessageSquare size={28} color="var(--accent-primary)" />
+          <img src="/favicon.svg.jpeg" alt="HostelAdda Logo" style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '4px' }} />
           <span className="heading-md" style={{ marginLeft: '0.5rem' }}>HostelAdda</span>
         </div>
         <div className="nav-actions">

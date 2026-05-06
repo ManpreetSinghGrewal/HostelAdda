@@ -118,7 +118,7 @@ const Dashboard = () => {
       {/* Top Navbar */}
       <header className="top-navbar glass-panel">
         <div className="navbar-left flex-center">
-          <MessageSquare size={24} color="var(--accent-primary)" />
+          <img src="/favicon.svg.jpeg" alt="HostelAdda Logo" style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
           <span className="heading-md" style={{ marginLeft: '0.5rem' }}>HostelAdda</span>
         </div>
         
