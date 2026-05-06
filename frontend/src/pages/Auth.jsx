@@ -10,6 +10,7 @@ const Auth = () => {
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', gender: '', hostelBlock: '', otp: '' });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
   const maleHostels = ['FRANKLIN-A', 'FRANKLIN-B', 'ARCHIMEDIES-A', 'ARCHIMEDIES-B', 'ARMSTRONG', 'MAGELLAN', 'MARCOPOLO'];
   const femaleHostels = ['NGH-A', 'NGH-B', 'VASCO', 'COLUMBUS', 'IBN-A', 'IBN-B', 'IBN-C', 'PIE-A', 'PIE-B', 'PIE-C'];
@@ -28,6 +29,7 @@ const Auth = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     
     let res;
     if (isLogin) {
@@ -35,6 +37,7 @@ const Auth = () => {
     } else {
       if (!formData.email.endsWith('@chitkara.edu.in')) {
         setError('Only @chitkara.edu.in email addresses are allowed for registration.');
+        setIsLoading(false);
         return;
       }
       
@@ -42,6 +45,7 @@ const Auth = () => {
         res = await sendOtp(formData.email);
         if (res.success) {
           setShowOtpInput(true);
+          setIsLoading(false);
           return; // Stop here, wait for user to enter OTP
         }
       } else {
@@ -52,6 +56,7 @@ const Auth = () => {
     if (!res.success) {
       setError(res.message);
     }
+    setIsLoading(false);
   };
 
   return (
@@ -137,8 +142,8 @@ const Auth = () => {
             </div>
           )}
 
-          <button type="submit" className="btn btn-primary w-100 mt-4">
-            {isLogin ? 'Login' : (showOtpInput ? 'Verify & Sign Up' : 'Get OTP')}
+          <button type="submit" className="btn btn-primary w-100 mt-4" disabled={isLoading}>
+            {isLoading ? 'Processing...' : (isLogin ? 'Login' : (showOtpInput ? 'Verify & Sign Up' : 'Get OTP'))}
           </button>
         </form>
 
