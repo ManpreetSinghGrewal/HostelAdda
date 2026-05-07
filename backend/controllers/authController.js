@@ -3,6 +3,21 @@ const OTP = require('../models/OTP');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 
+// Lazily initialize transporter to ensure process.env is fully loaded
+let transporter;
+const getTransporter = () => {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+  }
+  return transporter;
+};
+
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
@@ -30,15 +45,6 @@ const sendOtp = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // Send email using nodemailer
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -46,7 +52,9 @@ const sendOtp = async (req, res) => {
       text: `Your OTP for HostelAdda registration is: ${otp}\nThis OTP is valid for 5 minutes.`,
     };
 
-    await transporter.sendMail(mailOptions);
+    // Send email using the cached transporter and await it to ensure delivery
+    await getTransporter().sendMail(mailOptions);
+
     res.status(200).json({ message: 'OTP sent successfully' });
   } catch (error) {
     console.error('Error sending OTP:', error);
