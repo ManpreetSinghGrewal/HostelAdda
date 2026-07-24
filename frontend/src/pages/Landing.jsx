@@ -57,9 +57,9 @@ const Landing = () => {
         </div>
 
         <nav className="nav-links">
-          <button className="nav-link-btn" onClick={() => navigate('/dashboard')}>Explore Rooms</button>
-          <button className="nav-link-btn" onClick={() => navigate('/dashboard')}>Random Match</button>
-          <button className="nav-link-btn" onClick={() => setShowTerms(true)}>Guidelines</button>
+          <button className="nav-link-btn" onClick={() => navigate('/')}>Home</button>
+          <button className="nav-link-btn" onClick={() => setShowTerms(true)}>About Us</button>
+          <button className="nav-link-btn" onClick={() => navigate(user ? '/dashboard' : '/auth')}>Profile</button>
         </nav>
 
         <div className="nav-actions flex-center">
@@ -68,23 +68,13 @@ const Landing = () => {
           </button>
           
           {user ? (
-            <>
-              <button className="btn btn-secondary nav-btn-compact flex-center" onClick={() => navigate('/dashboard')} style={{ gap: '0.4rem' }}>
-                <User size={15} /> {user.name}
-              </button>
-              <button className="btn btn-primary nav-btn-compact flex-center" onClick={() => navigate('/dashboard')} style={{ gap: '0.4rem' }}>
-                Dashboard <ArrowRight size={14} />
-              </button>
-            </>
+            <button className="btn btn-primary nav-btn-compact flex-center" onClick={() => navigate('/dashboard')} style={{ gap: '0.4rem' }}>
+              <User size={15} /> {user.name}
+            </button>
           ) : (
-            <>
-              <button className="btn btn-secondary nav-btn-compact" onClick={() => navigate('/auth')}>
-                Login
-              </button>
-              <button className="btn btn-primary nav-btn-compact flex-center" onClick={handleGetStartedClick} style={{ gap: '0.4rem' }}>
-                Get Started <ArrowRight size={14} />
-              </button>
-            </>
+            <button className="btn btn-primary nav-btn-compact flex-center" onClick={() => navigate('/auth')} style={{ gap: '0.4rem' }}>
+              <User size={15} /> Profile
+            </button>
           )}
         </div>
       </header>

@@ -227,16 +227,20 @@ const Dashboard = () => {
         <div className="navbar-right flex-center">
           <div className="desktop-nav" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <button className="btn btn-secondary" onClick={() => navigate('/')}>
-              <Home size={18} /> Home
+              <Home size={16} /> Home
+            </button>
+
+            <button className="btn btn-secondary" onClick={() => navigate('/')}>
+              <FileText size={16} /> About Us
             </button>
 
             {user ? (
-              <button className="btn btn-secondary" onClick={openEditProfile}>
-                <Edit2 size={16} /> {user.name} ({user.hostelBlock || 'Hostel'})
+              <button className="btn btn-primary" onClick={openEditProfile}>
+                <User size={16} /> {user.name}
               </button>
             ) : (
               <button className="btn btn-primary" onClick={() => navigate('/auth')}>
-                <LogIn size={16} /> Sign In
+                <User size={16} /> Profile
               </button>
             )}
 
