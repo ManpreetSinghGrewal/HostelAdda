@@ -1,13 +1,15 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Video, Users, Shield, Sun, Moon, FileText, Shuffle, Sparkles, Building2, ChevronRight, CheckCircle2, Lock, ArrowRight } from 'lucide-react';
+import { MessageSquare, Video, Users, Shield, Sun, Moon, FileText, Shuffle, Building2, CheckCircle2, ArrowRight, User, LogOut } from 'lucide-react';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { AuthContext } from '../contexts/AuthContext';
 import TermsModal from '../components/TermsModal';
 import './Landing.css';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useContext(ThemeContext);
+  const { user, logout } = useContext(AuthContext);
   const [showTerms, setShowTerms] = useState(false);
 
   const maleHostels = [
@@ -25,7 +27,11 @@ const Landing = () => {
   ];
 
   const handleGetStartedClick = () => {
-    setShowTerms(true);
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      setShowTerms(true);
+    }
   };
 
   const handleTermsAccept = () => {
@@ -61,24 +67,31 @@ const Landing = () => {
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           
-          <button className="btn btn-secondary nav-btn-compact" onClick={() => navigate('/auth')}>
-            Login
-          </button>
-          
-          <button className="btn btn-primary nav-btn-compact" onClick={handleGetStartedClick}>
-            Get Started <ArrowRight size={14} />
-          </button>
+          {user ? (
+            <>
+              <button className="btn btn-secondary nav-btn-compact flex-center" onClick={() => navigate('/dashboard')} style={{ gap: '0.4rem' }}>
+                <User size={15} /> {user.name}
+              </button>
+              <button className="btn btn-primary nav-btn-compact flex-center" onClick={() => navigate('/dashboard')} style={{ gap: '0.4rem' }}>
+                Dashboard <ArrowRight size={14} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="btn btn-secondary nav-btn-compact" onClick={() => navigate('/auth')}>
+                Login
+              </button>
+              <button className="btn btn-primary nav-btn-compact flex-center" onClick={handleGetStartedClick} style={{ gap: '0.4rem' }}>
+                Get Started <ArrowRight size={14} />
+              </button>
+            </>
+          )}
         </div>
       </header>
 
       {/* Hero Section */}
       <main className="hero-section flex-center">
         <div className="hero-content">
-          <div className="portal-badge">
-            <Sparkles size={14} style={{ color: '#ea580c' }} />
-            <span>OFFICIAL CHITKARA HOSTEL STUDENT PORTAL</span>
-          </div>
-
           <h1 className="heading-xl hero-title">
             Connect with your <br />
             <span className="text-gradient-accent">Hostel Community</span>
@@ -90,9 +103,15 @@ const Landing = () => {
           </p>
 
           <div className="hero-buttons">
-            <button className="btn btn-primary btn-lg" onClick={handleGetStartedClick}>
-              Join HostelAdda <Users size={20} />
-            </button>
+            {user ? (
+              <button className="btn btn-primary btn-lg" onClick={() => navigate('/dashboard')}>
+                Go to Dashboard <ArrowRight size={20} />
+              </button>
+            ) : (
+              <button className="btn btn-primary btn-lg" onClick={handleGetStartedClick}>
+                Join HostelAdda <Users size={20} />
+              </button>
+            )}
             
             <button className="btn btn-secondary btn-lg" onClick={() => navigate('/dashboard')}>
               <Shuffle size={18} /> Random Match
@@ -164,7 +183,7 @@ const Landing = () => {
               <h3 className="directory-title"><Building2 size={20} color="#ea580c" /> Boys Hostel Blocks</h3>
               <div className="directory-list">
                 {maleHostels.map((hostel, idx) => (
-                  <div key={idx} className="glass-card directory-item" onClick={() => navigate('/auth')}>
+                  <div key={idx} className="glass-card directory-item" onClick={() => navigate(user ? '/dashboard' : '/auth')}>
                     <div>
                       <div className="directory-name">{hostel.name}</div>
                       <div className="directory-desc">{hostel.desc}</div>
@@ -179,7 +198,7 @@ const Landing = () => {
               <h3 className="directory-title"><Building2 size={20} color="#ec4899" /> Girls Hostel Blocks</h3>
               <div className="directory-list">
                 {femaleHostels.map((hostel, idx) => (
-                  <div key={idx} className="glass-card directory-item" onClick={() => navigate('/auth')}>
+                  <div key={idx} className="glass-card directory-item" onClick={() => navigate(user ? '/dashboard' : '/auth')}>
                     <div>
                       <div className="directory-name">{hostel.name}</div>
                       <div className="directory-desc">{hostel.desc}</div>
