@@ -230,12 +230,12 @@ const Dashboard = () => {
               <Home size={16} /> Home
             </button>
 
-            <button className="btn btn-secondary" onClick={() => navigate('/')}>
+            <button className="btn btn-secondary" onClick={() => navigate('/about')}>
               <FileText size={16} /> About Us
             </button>
 
             {user ? (
-              <button className="btn btn-primary" onClick={openEditProfile}>
+              <button className="btn btn-primary" onClick={() => navigate('/profile')}>
                 <User size={16} /> {user.name}
               </button>
             ) : (

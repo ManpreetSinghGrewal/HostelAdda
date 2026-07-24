@@ -103,13 +103,18 @@ const acceptFriendRequest = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { name, hostelBlock } = req.body;
+    const { name, hostelBlock, avatarUrl, bio, newPassword } = req.body;
     
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
     
     if (name) user.name = name;
     if (hostelBlock) user.hostelBlock = hostelBlock;
+    if (avatarUrl !== undefined) user.avatarUrl = avatarUrl;
+    if (bio !== undefined) user.bio = bio;
+    if (newPassword && newPassword.trim().length >= 4) {
+      user.password = newPassword;
+    }
     
     await user.save();
     
@@ -117,8 +122,12 @@ const updateProfile = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      gender: user.gender,
       hostelBlock: user.hostelBlock,
-      token: req.headers.authorization?.split(' ')[1]
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      createdAt: user.createdAt,
+      message: 'Profile updated successfully'
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

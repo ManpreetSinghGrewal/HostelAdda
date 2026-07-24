@@ -54,13 +54,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const updateProfile = async (name, hostelBlock) => {
+  const updateProfile = async (profileData) => {
     try {
-      const { data } = await axios.put(`${API_URL}/api/users/${user._id}/profile`, { name, hostelBlock });
-      const updatedUser = { ...user, name: data.name, hostelBlock: data.hostelBlock };
+      // Support legacy two args or new profile object
+      const payload = typeof profileData === 'object' 
+        ? profileData 
+        : { name: arguments[0], hostelBlock: arguments[1] };
+
+      const { data } = await axios.put(`${API_URL}/api/users/${user._id}/profile`, payload);
+      const updatedUser = { 
+        ...user, 
+        name: data.name || user.name, 
+        hostelBlock: data.hostelBlock || user.hostelBlock,
+        avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : user.avatarUrl,
+        bio: data.bio !== undefined ? data.bio : user.bio
+      };
       setUser(updatedUser);
       localStorage.setItem('userInfo', JSON.stringify(updatedUser));
-      return { success: true };
+      return { success: true, message: data.message || 'Profile updated successfully' };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || 'Update failed' };
     }
