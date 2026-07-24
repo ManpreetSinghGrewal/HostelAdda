@@ -21,16 +21,15 @@ const createTransporter = () => {
       });
     }
 
+    const cleanPass = emailPass.replace(/\s+/g, '');
+
     return nodemailer.createTransport({
-      service: 'gmail',
-      pool: true,
-      maxConnections: 5,
-      connectionTimeout: 10000,
-      greetingTimeout: 5000,
-      socketTimeout: 10000,
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // Use SSL on port 465 for reliable cloud server delivery
       auth: {
         user: emailUser,
-        pass: emailPass,
+        pass: cleanPass,
       },
     });
   }
