@@ -79,12 +79,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const googleAuth = async (credential, gender, hostelBlock) => {
+  const googleAuth = async (credential, gender, hostelBlock, password) => {
     try {
       const { data } = await axios.post(`${API_URL}/api/auth/google`, {
         credential,
         gender,
-        hostelBlock
+        hostelBlock,
+        password
       });
 
       if (data.requiresProfileDetails) {

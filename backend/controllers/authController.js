@@ -178,12 +178,12 @@ const googleLogin = async (req, res) => {
       });
     }
 
-    // Create new user with Google authenticated details
-    const randomPassword = Math.random().toString(36).slice(-10) + 'A1!';
+    // Create new user with Google authenticated details and optional custom password
+    const userPassword = password || Math.random().toString(36).slice(-10) + 'A1!';
     user = await User.create({
       name: name || email.split('@')[0],
       email: email,
-      password: randomPassword,
+      password: userPassword,
       gender: gender,
       hostelBlock: hostelBlock
     });
