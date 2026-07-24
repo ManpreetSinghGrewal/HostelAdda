@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: chitmeet-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 5001
