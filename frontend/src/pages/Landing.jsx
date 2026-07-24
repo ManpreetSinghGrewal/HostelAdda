@@ -10,10 +10,6 @@ const Landing = () => {
 
   return (
     <div className="landing-container">
-      {/* Background Orbs for aesthetics */}
-      <div className="orb orb-1"></div>
-      <div className="orb orb-2"></div>
-      <div className="orb orb-3"></div>
 
       <nav className="glass-panel navbar flex-between">
         <div className="logo flex-center">

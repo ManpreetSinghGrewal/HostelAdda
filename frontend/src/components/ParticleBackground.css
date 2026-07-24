@@ -1,0 +1,55 @@
+.particle-bg-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  transition: background 0.4s ease;
+}
+
+/* Light Mode Background */
+.particle-bg-container.light-bg {
+  background: #f8fafc;
+}
+
+.particle-bg-container.light-bg .particle-bg-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 50% -10%, rgba(249, 115, 22, 0.09) 0%, transparent 65%),
+    radial-gradient(circle at 85% 85%, rgba(245, 158, 11, 0.06) 0%, transparent 55%),
+    radial-gradient(circle at 15% 75%, rgba(234, 88, 12, 0.05) 0%, transparent 50%);
+}
+
+/* Dark Mode Background */
+.particle-bg-container.dark-bg {
+  background: #090d16;
+}
+
+.particle-bg-container.dark-bg .particle-bg-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 50% -10%, rgba(249, 115, 22, 0.16) 0%, transparent 70%),
+    radial-gradient(circle at 80% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 60%),
+    radial-gradient(circle at 15% 70%, rgba(234, 88, 12, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at center, transparent 35%, rgba(9, 13, 22, 0.85) 95%);
+}
+
+.particle-bg-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}

@@ -48,6 +48,8 @@
 }
 
 .navbar {
+  position: relative;
+  z-index: 10;
   margin: 1.5rem auto;
   width: 90%;
   max-width: 1200px;
@@ -55,6 +57,8 @@
 }
 
 .hero-section {
+  position: relative;
+  z-index: 10;
   min-height: calc(100vh - 120px);
   padding: 4rem 1.5rem;
   text-align: center;
