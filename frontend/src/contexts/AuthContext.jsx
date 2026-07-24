@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
       const { data } = await axios.post(
         `${API_URL}/api/auth/send-otp`,
         { email },
-        { timeout: 12000 }
+        { timeout: 60000 }
       );
       return { 
         success: true, 
