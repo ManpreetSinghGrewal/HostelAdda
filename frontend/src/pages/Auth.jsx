@@ -106,16 +106,20 @@ const Auth = () => {
     setSuccessMsg('');
     setIsLoading(true);
 
-    const res = await sendOtp(emailToUse || formData.email);
-    setIsLoading(false);
-
-    if (res.success) {
-      setSignupStep(2);
-      setSuccessMsg(res.message);
-      if (res.devOtp) setDevOtp(res.devOtp);
-      startResendTimer();
-    } else {
-      setError(res.message);
+    try {
+      const res = await sendOtp(emailToUse || formData.email);
+      if (res.success) {
+        setSignupStep(2);
+        setSuccessMsg(res.message);
+        if (res.devOtp) setDevOtp(res.devOtp);
+        startResendTimer();
+      } else {
+        setError(res.message);
+      }
+    } catch (err) {
+      setError(err.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -127,9 +131,14 @@ const Auth = () => {
 
     if (isLogin) {
       setIsLoading(true);
-      const res = await login(formData.email, formData.password);
-      setIsLoading(false);
-      if (!res.success) setError(res.message);
+      try {
+        const res = await login(formData.email, formData.password);
+        if (!res.success) setError(res.message);
+      } catch (err) {
+        setError(err.message || 'Login failed.');
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -157,18 +166,22 @@ const Auth = () => {
       }
 
       setIsLoading(true);
-      const res = await register(
-        formData.name,
-        formData.email,
-        formData.password,
-        formData.gender,
-        formData.hostelBlock,
-        fullOtp
-      );
-      setIsLoading(false);
-
-      if (!res.success) {
-        setError(res.message);
+      try {
+        const res = await register(
+          formData.name,
+          formData.email,
+          formData.password,
+          formData.gender,
+          formData.hostelBlock,
+          fullOtp
+        );
+        if (!res.success) {
+          setError(res.message);
+        }
+      } catch (err) {
+        setError(err.message || 'Registration failed.');
+      } finally {
+        setIsLoading(false);
       }
     }
   };

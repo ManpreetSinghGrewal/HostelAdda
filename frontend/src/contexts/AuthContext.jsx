@@ -26,8 +26,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   const sendOtp = async (email) => {
+    // Check if live site (HTTPS) is trying to call unconfigured localhost backend
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_URL.includes('localhost')) {
+      return {
+        success: false,
+        message: 'Live site cannot connect to localhost. Please add VITE_API_URL in Vercel Environment Variables.'
+      };
+    }
+
     try {
-      const { data } = await axios.post(`${API_URL}/api/auth/send-otp`, { email });
+      const { data } = await axios.post(
+        `${API_URL}/api/auth/send-otp`,
+        { email },
+        { timeout: 12000 }
+      );
       return { 
         success: true, 
         message: data.message,
@@ -35,7 +47,10 @@ export const AuthProvider = ({ children }) => {
         devOtp: data.devOtp
       };
     } catch (error) {
-      return { success: false, message: error.response?.data?.message || 'Failed to send OTP' };
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        return { success: false, message: 'Server connection timed out. Please check backend connection.' };
+      }
+      return { success: false, message: error.response?.data?.message || error.message || 'Failed to send OTP' };
     }
   };
 
