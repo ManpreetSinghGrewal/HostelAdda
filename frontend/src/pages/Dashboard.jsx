@@ -10,27 +10,6 @@ import './Dashboard.css';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const Dashboard = () => {
-  const [rooms, setRooms] = useState([]);
-  const [friends, setFriends] = useState([]);
-  const [onlineCount, setOnlineCount] = useState(0);
-  const [onlineMaleCount, setOnlineMaleCount] = useState(0);
-  const [onlineFemaleCount, setOnlineFemaleCount] = useState(0);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editHostel, setEditHostel] = useState('');
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // New Search & Category Filtering State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
-  
-  const navigate = useNavigate();
-  const { user, logout, updateProfile } = useContext(AuthContext);
-  const socket = useContext(SocketContext);
-  const { isDark, toggleTheme } = useContext(ThemeContext);
-
   // Default Chitkara Hostel Rooms
   const defaultRooms = [
     {
@@ -82,6 +61,22 @@ const Dashboard = () => {
       category: 'study'
     }
   ];
+
+  const [rooms, setRooms] = useState(defaultRooms);
+  const [friends, setFriends] = useState([]);
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [onlineMaleCount, setOnlineMaleCount] = useState(0);
+  const [onlineFemaleCount, setOnlineFemaleCount] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editHostel, setEditHostel] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Search & Category Filtering State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all');
 
   const fetchData = async () => {
     try {
