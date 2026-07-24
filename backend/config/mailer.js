@@ -20,6 +20,11 @@ const createTransporter = () => {
 
     return nodemailer.createTransport({
       service: 'gmail',
+      pool: true,
+      maxConnections: 5,
+      connectionTimeout: 10000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
       auth: {
         user: emailUser,
         pass: emailPass,
