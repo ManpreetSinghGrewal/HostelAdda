@@ -1,9 +1,12 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter dynamically based on env variables
+const DEFAULT_EMAIL_USER = 'manpreetsgrewal5911@gmail.com';
+const DEFAULT_EMAIL_PASS = 'zliq tiod efka wgpm';
+
+// Create transporter dynamically based on env variables or fallback
 const createTransporter = () => {
-  const emailUser = process.env.EMAIL_USER;
-  const emailPass = process.env.EMAIL_PASS;
+  const emailUser = process.env.EMAIL_USER || DEFAULT_EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS || DEFAULT_EMAIL_PASS;
 
   if (emailUser && emailPass && emailPass !== 'YOUR_SENDGRID_API_KEY_HERE') {
     if (process.env.SMTP_HOST) {
@@ -69,15 +72,16 @@ const sendOtpEmail = async (toEmail, otp) => {
 
   if (!transporter) {
     console.log(`\n======================================================`);
-    console.log(`[DEV OTP NOTIFICATION] Mail server credentials not set in backend/.env`);
+    console.log(`[DEV OTP NOTIFICATION] Mail server credentials not set`);
     console.log(`[DEV OTP NOTIFICATION] OTP for ${toEmail}: ${otp}`);
     console.log(`======================================================\n`);
     return { sent: false, isDevFallback: true };
   }
 
   try {
+    const senderEmail = process.env.EMAIL_USER || DEFAULT_EMAIL_USER;
     await transporter.sendMail({
-      from: `"HostelAdda" <${process.env.EMAIL_USER || 'no-reply@chitkara.edu.in'}>`,
+      from: `"HostelAdda" <${senderEmail}>`,
       to: toEmail,
       subject: `${otp} is your HostelAdda Registration OTP`,
       text: `Your OTP for HostelAdda registration is: ${otp}. Valid for 5 minutes.`,

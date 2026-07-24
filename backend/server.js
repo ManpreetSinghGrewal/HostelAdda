@@ -16,6 +16,9 @@ app.use(express.json());
 
 connectDB();
 
+app.get('/', (req, res) => res.json({ message: 'HostelAdda Backend Server Running' }));
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/users', userRoutes);
