@@ -1,7 +1,7 @@
 // Chitmeet Authentication Component
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Mail, Building, Sun, Moon, ArrowLeft, CheckCircle, RefreshCw, ShieldCheck } from 'lucide-react';
+import { User, Lock, Mail, Building, Sun, Moon, ArrowLeft, CheckCircle, RefreshCw, ShieldCheck, LogIn } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { AuthContext } from '../contexts/AuthContext';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -118,7 +118,6 @@ const Auth = () => {
     }
   };
 
-  // Handle single digit OTP input change
   const handleOtpChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
 
@@ -147,14 +146,22 @@ const Auth = () => {
     otpInputRefs[5].current?.focus();
   };
 
-  const toggleAuthMode = () => {
-    setIsLogin(!isLogin);
+  const switchToLoginMode = () => {
+    setIsLogin(true);
     setSignupStep(1);
     setGoogleProfileState(null);
     setError('');
     setSuccessMsg('');
     setDevOtp('');
-    setOtpDigits(['', '', '', '', '', '']);
+  };
+
+  const switchToSignupMode = () => {
+    setIsLogin(false);
+    setSignupStep(1);
+    setGoogleProfileState(null);
+    setError('');
+    setSuccessMsg('');
+    setDevOtp('');
   };
 
   const triggerSendOtp = async (emailToUse) => {
@@ -266,16 +273,48 @@ const Auth = () => {
             {googleProfileState
               ? 'Select your Hostel & Gender to complete sign up'
               : isLogin
-              ? 'Login with your Chitkara account'
+              ? 'Login with your Chitkara University account'
               : signupStep === 1
               ? '1-Click Google Sign-In or Email Verification'
               : `We sent a 6-digit OTP to ${formData.email}`}
           </p>
         </div>
 
+        {/* LOGIN / SIGNUP TABS */}
+        {!googleProfileState && (
+          <div className="auth-tabs">
+            <button
+              type="button"
+              className={`auth-tab ${isLogin ? 'active' : ''}`}
+              onClick={switchToLoginMode}
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              className={`auth-tab ${!isLogin ? 'active' : ''}`}
+              onClick={switchToSignupMode}
+            >
+              Sign Up
+            </button>
+          </div>
+        )}
+
         {error && (
-          <div style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>
+          <div style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', textAlign: 'center', fontSize: '0.875rem' }}>
             {error}
+            {error.includes('already exists') && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={switchToLoginMode}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                >
+                  <LogIn size={14} /> Click here to Login
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -299,7 +338,7 @@ const Auth = () => {
             </div>
 
             <div className="auth-divider w-100">
-              <span>OR USE EMAIL</span>
+              <span>OR USE PASSWORD</span>
             </div>
           </div>
         )}
@@ -467,7 +506,7 @@ const Auth = () => {
                     />
                   </div>
                   {!isLogin && (
-                    <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '0.25rem' }}>
+                    <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '0.2rem' }}>
                       Only @chitkara.edu.in emails allowed.
                     </small>
                   )}
@@ -547,7 +586,7 @@ const Auth = () => {
         <div className="auth-footer text-center">
           <p className="text-small">
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
-            <span className="auth-link" onClick={toggleAuthMode}>
+            <span className="auth-link" onClick={isLogin ? switchToSignupMode : switchToLoginMode}>
               {isLogin ? 'Sign up' : 'Login'}
             </span>
           </p>
