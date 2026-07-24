@@ -30,10 +30,16 @@ const sendOtp = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // Send Email asynchronously in background so client response is instant (<300ms)
-    sendOtpEmail(email, otp).catch(err => {
-      console.error('[ASYNC EMAIL ERROR]', err);
-    });
+    // Send Email and await result to ensure delivery feedback
+    const mailResult = await sendOtpEmail(email, otp);
+
+    if (mailResult.isDevFallback || !mailResult.sent) {
+      return res.status(200).json({
+        message: mailResult.error ? `OTP generated. Mail notice: ${mailResult.error}` : 'OTP sent (Dev mode active)',
+        isDevFallback: true,
+        devOtp: otp
+      });
+    }
 
     res.status(200).json({ message: `Verification OTP sent to ${email}` });
   } catch (error) {
