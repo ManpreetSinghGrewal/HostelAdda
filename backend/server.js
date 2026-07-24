@@ -40,19 +40,24 @@ let waitingUser = null; // For Omegle-style matching
 const broadcastOnlineStats = async () => {
   try {
     const onlineUsers = await User.find({ isOnline: true });
-    const totalCount = onlineUsers.length;
-    const maleCount = onlineUsers.filter(u => u.gender === 'Male').length;
-    const femaleCount = onlineUsers.filter(u => u.gender === 'Female').length;
-    const othersCount = onlineUsers.filter(u => u.gender === 'Others').length;
+    let maleCount = onlineUsers.filter(u => u.gender === 'Male').length;
+    let femaleCount = onlineUsers.filter(u => u.gender === 'Female').length;
+    let othersCount = onlineUsers.filter(u => u.gender === 'Others').length;
+    let knownCount = maleCount + femaleCount + othersCount;
 
     const activeSockets = io.sockets.sockets.size;
-    const finalTotal = Math.max(totalCount, activeSockets);
+    const totalCount = Math.max(knownCount, activeSockets);
+    const unassigned = totalCount - knownCount;
+
+    if (unassigned > 0) {
+      maleCount += unassigned;
+    }
 
     io.emit('online-count-updated', {
-      count: finalTotal,
-      maleCount: Math.max(maleCount, finalTotal > 0 ? (maleCount || 1) : 0),
-      femaleCount: femaleCount,
-      othersCount: othersCount
+      count: totalCount,
+      maleCount,
+      femaleCount,
+      othersCount
     });
   } catch (error) {
     console.error('Error broadcasting online stats:', error);

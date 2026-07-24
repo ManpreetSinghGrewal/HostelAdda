@@ -12,20 +12,25 @@ const getOnlineUsers = async (req, res) => {
 const getOnlineCount = async (req, res) => {
   try {
     const onlineUsers = await User.find({ isOnline: true });
-    const totalCount = onlineUsers.length;
-    const maleCount = onlineUsers.filter(u => u.gender === 'Male').length;
-    const femaleCount = onlineUsers.filter(u => u.gender === 'Female').length;
-    const othersCount = onlineUsers.filter(u => u.gender === 'Others').length;
+    let maleCount = onlineUsers.filter(u => u.gender === 'Male').length;
+    let femaleCount = onlineUsers.filter(u => u.gender === 'Female').length;
+    let othersCount = onlineUsers.filter(u => u.gender === 'Others').length;
+    let knownCount = maleCount + femaleCount + othersCount;
 
     const io = req.app.get('io');
     const activeSockets = io ? io.sockets.sockets.size : 0;
-    const finalTotal = Math.max(totalCount, activeSockets);
+    const totalCount = Math.max(knownCount, activeSockets);
+    const unassigned = totalCount - knownCount;
+
+    if (unassigned > 0) {
+      maleCount += unassigned;
+    }
 
     res.json({
-      count: finalTotal,
-      maleCount: Math.max(maleCount, finalTotal > 0 ? (maleCount || 1) : 0),
-      femaleCount: femaleCount,
-      othersCount: othersCount
+      count: totalCount,
+      maleCount,
+      femaleCount,
+      othersCount
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -82,11 +87,8 @@ const acceptFriendRequest = async (req, res) => {
       return res.status(400).json({ message: 'No request found' });
     }
 
-    // Remove from requests, add to friends
     user.friendRequests = user.friendRequests.filter(id => id.toString() !== fromUserId.toString());
     if (!user.friends.includes(fromUserId)) user.friends.push(fromUserId);
-    
-    // Add to other person's friends
     if (!fromUser.friends.includes(userId)) fromUser.friends.push(userId);
 
     await user.save();
@@ -116,7 +118,7 @@ const updateProfile = async (req, res) => {
       name: user.name,
       email: user.email,
       hostelBlock: user.hostelBlock,
-      token: req.headers.authorization?.split(' ')[1] // usually frontend handles token, this is just info
+      token: req.headers.authorization?.split(' ')[1]
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

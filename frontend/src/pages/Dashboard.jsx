@@ -218,7 +218,9 @@ const Dashboard = () => {
           </div>
           <div className="online-badge">
             <div className="online-indicator-dot"></div>
-            {onlineCount} Online (👨 {onlineMaleCount} 👩 {onlineFemaleCount})
+            {onlineFemaleCount > 0 
+              ? `${onlineCount} Online (👨 ${onlineMaleCount} 👩 ${onlineFemaleCount})`
+              : `${onlineCount} Online (👨 ${onlineMaleCount})`}
           </div>
         </div>
         
