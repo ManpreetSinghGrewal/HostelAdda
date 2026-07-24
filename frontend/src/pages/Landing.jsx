@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Video, Users, Shield, Sun, Moon, FileText, Shuffle, Building2, CheckCircle2, ArrowRight, User, LogOut } from 'lucide-react';
+import { MessageSquare, Video, Users, Shield, Sun, Moon, FileText, Shuffle, CheckCircle2, ArrowRight, User } from 'lucide-react';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { AuthContext } from '../contexts/AuthContext';
 import TermsModal from '../components/TermsModal';
@@ -9,22 +9,8 @@ import './Landing.css';
 const Landing = () => {
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useContext(ThemeContext);
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [showTerms, setShowTerms] = useState(false);
-
-  const maleHostels = [
-    { name: 'Franklin Block A & B', tag: 'Boys Hostel', desc: 'Engineering & Tech Hub' },
-    { name: 'Archimedes Block A & B', tag: 'Boys Hostel', desc: 'CSE & Coding Community' },
-    { name: 'Armstrong & Magellan', tag: 'Boys Hostel', desc: 'Robotics & Gaming Lounge' },
-    { name: 'Marco Polo', tag: 'Boys Hostel', desc: 'Freshers & General Hangout' }
-  ];
-
-  const femaleHostels = [
-    { name: 'NGH Block A & B', tag: 'Girls Hostel', desc: 'Academic & Creative Lounge' },
-    { name: 'Vasco & Columbus', tag: 'Girls Hostel', desc: 'Peer Networking & Discussion' },
-    { name: 'IBN Block A, B & C', tag: 'Girls Hostel', desc: 'Group Study & Projects' },
-    { name: 'PIE Block A, B & C', tag: 'Girls Hostel', desc: 'Cultural & Event Hub' }
-  ];
 
   const handleGetStartedClick = () => {
     if (user) {
@@ -159,44 +145,6 @@ const Landing = () => {
               <div className="feature-icon success"><Shield size={24} /></div>
               <h3 className="heading-md">Verified & Moderated</h3>
               <p className="text-small">Strictly restricted to @chitkara.edu.in accounts. Zero tolerance for abusive language.</p>
-            </div>
-          </div>
-
-          {/* Hostel Blocks Directory Section */}
-          <div className="section-title text-center mt-16 mb-8">
-            <h2 className="heading-lg">Hostel Directory</h2>
-            <p className="text-small text-muted">Connect directly with students in your specific hostel block</p>
-          </div>
-
-          <div className="hostel-directory-grid">
-            <div className="directory-column">
-              <h3 className="directory-title"><Building2 size={20} color="#ea580c" /> Boys Hostel Blocks</h3>
-              <div className="directory-list">
-                {maleHostels.map((hostel, idx) => (
-                  <div key={idx} className="glass-card directory-item" onClick={() => navigate(user ? '/dashboard' : '/auth')}>
-                    <div>
-                      <div className="directory-name">{hostel.name}</div>
-                      <div className="directory-desc">{hostel.desc}</div>
-                    </div>
-                    <span className="directory-tag boys">{hostel.tag}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="directory-column">
-              <h3 className="directory-title"><Building2 size={20} color="#ec4899" /> Girls Hostel Blocks</h3>
-              <div className="directory-list">
-                {femaleHostels.map((hostel, idx) => (
-                  <div key={idx} className="glass-card directory-item" onClick={() => navigate(user ? '/dashboard' : '/auth')}>
-                    <div>
-                      <div className="directory-name">{hostel.name}</div>
-                      <div className="directory-desc">{hostel.desc}</div>
-                    </div>
-                    <span className="directory-tag girls">{hostel.tag}</span>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 
