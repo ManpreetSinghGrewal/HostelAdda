@@ -30,12 +30,13 @@ const sendOtp = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // Send Email and await result to ensure delivery feedback
+    // Await sendOtpEmail so cloud worker does not terminate background SMTP execution
     const mailResult = await sendOtpEmail(email, otp);
+    console.log(`[AUTH LOG] Mail delivery status for ${email}:`, mailResult);
 
-    if (mailResult.isDevFallback || !mailResult.sent) {
+    if (mailResult.isDevFallback) {
       return res.status(200).json({
-        message: mailResult.error ? `OTP generated. Mail notice: ${mailResult.error}` : 'OTP sent (Dev mode active)',
+        message: 'OTP generated. (Dev Mode active)',
         isDevFallback: true,
         devOtp: otp
       });
