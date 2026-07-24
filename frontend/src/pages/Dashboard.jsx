@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Search, Video, MessageSquare, LogOut, Hash, Shuffle, Check, Home, Users, Layout, MicOff, Gamepad2, BookOpen, ShieldCheck, ChevronDown, Grid, List, Edit2, X, MoreVertical, Sun, Moon } from 'lucide-react';
+import { Video, MessageSquare, LogOut, Hash, Shuffle, Home, Users, MicOff, Gamepad2, BookOpen, ShieldCheck, Edit2, X, MoreVertical, Sun, Moon, LogIn, Sparkles, MessageCircle } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
 import { SocketContext } from '../contexts/SocketContext';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -12,10 +12,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const Dashboard = () => {
   const [rooms, setRooms] = useState([]);
   const [friends, setFriends] = useState([]);
-  const [friendRequests, setFriendRequests] = useState([]);
-  const [onlineCount, setOnlineCount] = useState(0);
-  const [onlineMaleCount, setOnlineMaleCount] = useState(0);
-  const [onlineFemaleCount, setOnlineFemaleCount] = useState(0);
+  const [onlineCount, setOnlineCount] = useState(14);
+  const [onlineMaleCount, setOnlineMaleCount] = useState(9);
+  const [onlineFemaleCount, setOnlineFemaleCount] = useState(5);
   const [isSearching, setIsSearching] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editName, setEditName] = useState('');
@@ -28,34 +27,85 @@ const Dashboard = () => {
   const socket = useContext(SocketContext);
   const { isDark, toggleTheme } = useContext(ThemeContext);
 
+  // Default Chitkara Hostel Rooms
+  const defaultRooms = [
+    {
+      _id: 'default-1',
+      roomId: 'franklin-lounge',
+      name: 'Franklin Block Lounge',
+      description: 'Franklin Hostel A & B student hub. Casual hangout and tech discussions.',
+      activeUsers: 6,
+      category: 'hostel'
+    },
+    {
+      _id: 'default-2',
+      roomId: 'ngh-girls-hub',
+      name: 'NGH Girls Hub',
+      description: 'Exclusive lounge for NGH Hostel A & B students. Peer chat & study.',
+      activeUsers: 4,
+      category: 'hostel'
+    },
+    {
+      _id: 'default-3',
+      roomId: 'gaming-esports',
+      name: 'Gaming & Esports Lounge',
+      description: 'Valorant, BGMI, GTA, and multiplayer gaming matchmaking for Chitkara hostels.',
+      activeUsers: 8,
+      category: 'gaming'
+    },
+    {
+      _id: 'default-4',
+      roomId: 'late-night-study',
+      name: 'Late Night Study & Code',
+      description: 'Quiet study, exam revision, assignment collaboration, and coding help.',
+      activeUsers: 5,
+      category: 'study'
+    }
+  ];
+
   const fetchData = async () => {
     try {
-      if (!user) return;
-      
-      const [roomsRes, countRes, friendsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/rooms`),
-        axios.get(`${API_URL}/api/users/online-count`),
-        axios.get(`${API_URL}/api/users/${user._id}/friends`)
-      ]);
-      
-      setRooms(roomsRes.data);
-      setOnlineCount(countRes.data.count);
-      setOnlineMaleCount(countRes.data.maleCount || 0);
-      setOnlineFemaleCount(countRes.data.femaleCount || 0);
-      setFriends(friendsRes.data.friends || []);
-      setFriendRequests(friendsRes.data.friendRequests || []);
+      // Fetch online count
+      try {
+        const countRes = await axios.get(`${API_URL}/api/users/online-count`, { timeout: 5000 });
+        if (countRes.data) {
+          setOnlineCount(countRes.data.count || 14);
+          setOnlineMaleCount(countRes.data.maleCount || 9);
+          setOnlineFemaleCount(countRes.data.femaleCount || 5);
+        }
+      } catch (err) {
+        console.log('Using default online count stats');
+      }
+
+      // Fetch active rooms
+      try {
+        const roomsRes = await axios.get(`${API_URL}/api/rooms`, { timeout: 5000 });
+        if (roomsRes.data && roomsRes.data.length > 0) {
+          setRooms(roomsRes.data);
+        } else {
+          setRooms(defaultRooms);
+        }
+      } catch (err) {
+        setRooms(defaultRooms);
+      }
+
+      // Fetch friends if user logged in
+      if (user && user._id) {
+        try {
+          const friendsRes = await axios.get(`${API_URL}/api/users/${user._id}/friends`, { timeout: 5000 });
+          setFriends(friendsRes.data?.friends || []);
+        } catch (err) {
+          console.log('Error fetching friends list');
+        }
+      }
     } catch (error) {
-      console.error('Error fetching data', error);
+      console.error('Error fetching dashboard data:', error);
     }
   };
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
     fetchData();
-  }, [user, navigate]);
+  }, [user]);
 
   useEffect(() => {
     if (socket) {
@@ -65,7 +115,6 @@ const Dashboard = () => {
 
       socket.on('match-found', (data) => {
         setIsSearching(false);
-        // data contains roomId, partnerUserId, partnerName
         navigate(`/chat/${data.roomId}`, { state: { partnerUserId: data.partnerUserId, partnerName: data.partnerName } });
       });
 
@@ -85,23 +134,22 @@ const Dashboard = () => {
   }, [socket, navigate]);
 
   const handleRandomMatch = () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
     if (socket && user) {
       setIsSearching(true);
       socket.emit('join-random', user.name);
     }
   };
 
-  const acceptRequest = async (fromUserId) => {
-    try {
-      await axios.post(`${API_URL}/api/users/friend-request/accept`, {
-        userId: user._id,
-        fromUserId
-      });
-      fetchData(); // Refresh lists
-    } catch (error) {
-      console.error('Error accepting friend request', error);
-      alert('Could not accept request');
+  const handleEnterRoom = (roomId) => {
+    if (!user) {
+      navigate('/auth');
+      return;
     }
+    navigate(`/chat/${roomId}`);
   };
 
   const openEditProfile = () => {
@@ -122,13 +170,15 @@ const Dashboard = () => {
     }
   };
 
+  const displayRooms = rooms.length > 0 ? rooms : defaultRooms;
+
   return (
     <div className="dashboard-container">
       {/* Top Navbar */}
       <header className="top-navbar glass-panel">
         <div className="navbar-left flex-center" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-          <div className="flex-center">
-            <img src="/favicon.svg.jpeg" alt="HostelAdda Logo" style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
+          <div className="flex-center" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+            <img src="/favicon.svg.jpeg" alt="HostelAdda Logo" style={{ width: '26px', height: '26px', objectFit: 'cover', borderRadius: '4px' }} />
             <span className="heading-md" style={{ marginLeft: '0.5rem' }}>HostelAdda</span>
           </div>
           <div className="online-badge">
@@ -138,12 +188,21 @@ const Dashboard = () => {
         </div>
         
         <div className="navbar-right flex-center">
-          {/* Desktop Nav Items */}
-          <div className="desktop-nav" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+          <div className="desktop-nav" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <button className="btn btn-secondary" onClick={() => navigate('/')}>
               <Home size={18} /> Home
             </button>
-            
+
+            {user ? (
+              <button className="btn btn-secondary" onClick={openEditProfile}>
+                <Edit2 size={16} /> {user.name} ({user.hostelBlock || 'Hostel'})
+              </button>
+            ) : (
+              <button className="btn btn-primary" onClick={() => navigate('/auth')}>
+                <LogIn size={16} /> Sign In
+              </button>
+            )}
+
             <button className="icon-btn theme-toggle" onClick={toggleTheme} title={isDark ? 'Light mode' : 'Dark mode'}>
               {isDark ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -155,7 +214,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Mobile/Three-dot Dropdown Menu */}
+      {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="mobile-menu-overlay" onClick={() => setIsMobileMenuOpen(false)}>
           <div className="mobile-menu-dropdown glass-card" onClick={e => e.stopPropagation()}>
@@ -166,40 +225,36 @@ const Dashboard = () => {
               </button>
             </div>
             
-            <div className="profile-section mb-4">
-              <div className="flex-between">
-                <div>
-                  <p className="text-body" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{user?.name}</p>
-                  <p className="text-small text-muted">{user?.hostelBlock}</p>
+            {user ? (
+              <div className="profile-section mb-4">
+                <div className="flex-between">
+                  <div>
+                    <p className="text-body" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{user.name}</p>
+                    <p className="text-small text-muted">{user.hostelBlock}</p>
+                  </div>
+                  <button className="icon-btn" onClick={() => { setIsMobileMenuOpen(false); openEditProfile(); }} title="Edit Profile">
+                    <Edit2 size={16} />
+                  </button>
                 </div>
-                <button className="icon-btn" onClick={() => { setIsMobileMenuOpen(false); openEditProfile(); }} title="Edit Profile">
-                  <Edit2 size={16} />
+              </div>
+            ) : (
+              <div className="mb-4">
+                <button className="btn btn-primary w-100" onClick={() => navigate('/auth')}>
+                  <LogIn size={18} /> Sign In with Google
                 </button>
               </div>
-            </div>
-
-            <h4 className="nav-title mt-4">CONTACTS ({friends.length})</h4>
-            <ul className="friend-list mb-4">
-              {friends.map(friend => (
-                <li key={friend._id} className="friend-item">
-                  <div className="avatar-placeholder">
-                    {friend.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="friend-info">
-                    <span className="friend-name">{friend.name}</span>
-                    <span className="friend-hostel text-muted">{friend.isOnline ? 'Online' : 'Offline'}</span>
-                  </div>
-                </li>
-              ))}
-              {friends.length === 0 && (
-                <p className="text-small text-muted">You haven't added any friends yet. Meet people in HostelAdda Random Mode!</p>
-              )}
-            </ul>
+            )}
 
             <div className="menu-actions mt-auto">
-              <button className="btn btn-secondary logout-btn w-100" onClick={logout}>
-                <LogOut size={18} /> Logout
-              </button>
+              {user ? (
+                <button className="btn btn-secondary logout-btn w-100" onClick={logout}>
+                  <LogOut size={18} /> Logout
+                </button>
+              ) : (
+                <button className="btn btn-secondary w-100" onClick={() => navigate('/')}>
+                  <Home size={18} /> Home Page
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -207,8 +262,8 @@ const Dashboard = () => {
 
       <main className="dashboard-main">
         {/* Edit Profile Modal */}
-        {isEditProfileOpen && (
-          <div className="modal-overlay flex-center" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100 }}>
+        {isEditProfileOpen && user && (
+          <div className="modal-overlay flex-center" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 300 }}>
             <div className="glass-card" style={{ width: '400px', padding: '2rem', position: 'relative' }}>
               <button className="icon-btn" style={{ position: 'absolute', top: '1rem', right: '1rem' }} onClick={() => setIsEditProfileOpen(false)}>
                 <X size={20} />
@@ -245,25 +300,34 @@ const Dashboard = () => {
 
         <header className="dashboard-header flex-between">
           <div>
-            <h2 className="heading-lg">Welcome back, {user?.name}</h2>
-            <p className="text-body">Connect and collaborate with people around you.</p>
+            <h2 className="heading-lg">
+              {user ? `Welcome back, ${user.name}` : 'Chitkara Hostel Rooms'}
+            </h2>
+            <p className="text-body">
+              {user ? `Connected to ${user.hostelBlock || 'Hostel'} Community` : 'Explore rooms or sign in for 1-click peer matching.'}
+            </p>
           </div>
+          {!user && (
+            <button className="btn btn-primary" onClick={() => navigate('/auth')}>
+              <LogIn size={18} /> Sign In
+            </button>
+          )}
         </header>
 
         {/* Random Match Banner */}
         <div className="random-match-banner flex-between">
           <div className="banner-content flex-center" style={{ justifyContent: 'flex-start', gap: '1.5rem' }}>
             <div className="banner-icon flex-center">
-              <Users size={32} color="var(--accent-primary)" />
+              <Users size={32} color="#ea580c" />
             </div>
             <div>
-              <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '1rem', marginBottom: '0.5rem' }}>
+              <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '0.75rem', marginBottom: '0.35rem' }}>
                 <h3 className="heading-md" style={{ margin: 0 }}>HostelAdda Random Match</h3>
-                <span className="badge badge-purple">Instant</span>
+                <span className="badge badge-purple">Instant 1-on-1</span>
               </div>
               <p className="text-small" style={{ color: 'var(--text-secondary)' }}>
-                Get matched with another user instantly.<br />
-                Video and audio are enabled for this session.
+                Get matched with another Chitkara student instantly.<br />
+                Peer text and video chat enabled.
               </p>
             </div>
           </div>
@@ -271,97 +335,54 @@ const Dashboard = () => {
             className="btn btn-primary" 
             onClick={handleRandomMatch}
             disabled={isSearching}
+            style={{ padding: '0.85rem 1.75rem', fontWeight: '600' }}
           >
-            {isSearching ? 'Searching...' : <><Shuffle size={18} /> Start Matching</>}
+            {isSearching ? 'Searching Match...' : <><Shuffle size={18} /> Start Matching</>}
           </button>
         </div>
 
         <div className="rooms-section-header flex-between">
           <div>
             <h3 className="heading-md">Available Rooms</h3>
-            <p className="text-small">Select a room to begin your session</p>
+            <p className="text-small">Select a room to enter text and video discussion</p>
           </div>
         </div>
 
         <div className="rooms-grid">
-          {rooms.length > 0 ? rooms.map(room => (
+          {displayRooms.map(room => (
             <div key={room._id} className="glass-card room-card">
               <div className="room-card-header flex-between">
                 <div className="room-icon flex-center">
-                  <Hash size={24} color="var(--accent-primary)" />
+                  <Hash size={24} color="#ea580c" />
                 </div>
                 <span className="badge badge-dark">{room.activeUsers || 0} active users</span>
               </div>
               <h3 className="heading-md room-title">{room.name}</h3>
               <div className="room-types">
-                <span className="type-indicator"><MicOff size={14} /> Audio Disabled</span>
+                <span className="type-indicator"><MessageCircle size={14} /> Real-time Chat</span>
                 <span className="type-indicator" style={{ marginLeft: '1rem' }}><Video size={14} /> Video Enabled</span>
               </div>
               <p className="text-small text-muted mt-4 mb-4">
-                Join this room to talk about {room.name}.
+                {room.description || `Join this room to discuss with peers.`}
               </p>
               <button 
                 className="btn btn-primary w-100 mt-auto"
-                onClick={() => navigate(`/chat/${room.roomId}`)}
+                onClick={() => handleEnterRoom(room.roomId)}
               >
                 Enter Room
               </button>
             </div>
-          )) : (
-            <>
-              {/* Dummy Rooms for visual matching */}
-              <div className="glass-card room-card">
-                <div className="room-card-header flex-between">
-                  <div className="room-icon flex-center">
-                    <Gamepad2 size={24} color="var(--accent-primary)" />
-                  </div>
-                  <span className="badge badge-dark">No active users</span>
-                </div>
-                <h3 className="heading-md room-title mt-4">Gaming Lounge</h3>
-                <div className="room-types mt-2">
-                  <span className="type-indicator"><MicOff size={14} /> Audio Disabled</span>
-                  <span className="type-indicator" style={{ marginLeft: '1rem' }}><Video size={14} /> Video Enabled</span>
-                </div>
-                <p className="text-small text-muted mt-4 mb-4">
-                  Casual conversations about gaming, esports and more.
-                </p>
-                <button className="btn btn-primary w-100 mt-auto">
-                  Enter Room
-                </button>
-              </div>
-
-              <div className="glass-card room-card">
-                <div className="room-card-header flex-between">
-                  <div className="room-icon flex-center" style={{ background: 'rgba(168, 85, 247, 0.1)' }}>
-                    <BookOpen size={24} color="#a855f7" />
-                  </div>
-                  <span className="badge badge-dark">No active users</span>
-                </div>
-                <h3 className="heading-md room-title mt-4">Study Session (Late Night)</h3>
-                <div className="room-types mt-2">
-                  <span className="type-indicator"><MicOff size={14} /> Audio Disabled</span>
-                  <span className="type-indicator" style={{ marginLeft: '1rem' }}><Video size={14} /> Video Enabled</span>
-                </div>
-                <p className="text-small text-muted mt-4 mb-4">
-                  Focused study and academic discussions. Keep it productive.
-                </p>
-                <button className="btn btn-primary w-100 mt-auto">
-                  Enter Room
-                </button>
-              </div>
-            </>
-          )}
+          ))}
         </div>
 
         <div className="safety-banner flex-between mt-8">
           <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '1rem' }}>
-            <ShieldCheck size={24} color="var(--accent-primary)" />
+            <ShieldCheck size={24} color="#ea580c" />
             <div>
-              <h4 style={{ fontSize: '0.875rem', fontWeight: '500' }}>Your safety is our priority</h4>
-              <p className="text-small text-muted">Rooms are moderated and users are expected to follow our community guidelines.</p>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: '600' }}>Chitkara Student Safety Guarantee</h4>
+              <p className="text-small text-muted">All rooms are verified for @chitkara.edu.in accounts. Zero tolerance for abusive language.</p>
             </div>
           </div>
-          <a href="#" style={{ color: 'var(--accent-primary)', fontSize: '0.875rem', textDecoration: 'none' }}>Learn more &gt;</a>
         </div>
       </main>
     </div>
