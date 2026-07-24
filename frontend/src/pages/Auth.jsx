@@ -1,3 +1,4 @@
+// Chitmeet Authentication Component
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Mail, Building, Sun, Moon, ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react';
