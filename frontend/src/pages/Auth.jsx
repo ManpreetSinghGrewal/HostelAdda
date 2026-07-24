@@ -1,7 +1,8 @@
 // Chitmeet Authentication Component
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Mail, Building, Sun, Moon, ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react';
+import { User, Lock, Mail, Building, Sun, Moon, ArrowLeft, CheckCircle, RefreshCw, ShieldCheck } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { AuthContext } from '../contexts/AuthContext';
 import { ThemeContext } from '../contexts/ThemeContext';
 import './Auth.css';
@@ -11,6 +12,9 @@ const Auth = () => {
   const [signupStep, setSignupStep] = useState(1); // 1: Details form, 2: OTP Verification
   const [formData, setFormData] = useState({ name: '', email: '', password: '', gender: '', hostelBlock: '' });
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  
+  // Google Profile Completion State (if new user logs in via Google)
+  const [googleProfileState, setGoogleProfileState] = useState(null);
   
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -39,7 +43,7 @@ const Auth = () => {
   else if (formData.gender === 'Others') availableHostels = [...maleHostels, ...femaleHostels];
 
   const navigate = useNavigate();
-  const { login, register, sendOtp } = useContext(AuthContext);
+  const { login, register, sendOtp, googleAuth } = useContext(AuthContext);
   const { isDark, toggleTheme } = useContext(ThemeContext);
 
   // Timer logic for resend OTP
@@ -58,50 +62,101 @@ const Auth = () => {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  // Handle Google OAuth Success
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const res = await googleAuth(credentialResponse.credential);
+      if (res.requiresProfileDetails) {
+        setGoogleProfileState({
+          credential: credentialResponse.credential,
+          email: res.email,
+          name: res.name,
+          picture: res.picture,
+          gender: '',
+          hostelBlock: ''
+        });
+      } else if (!res.success) {
+        setError(res.message);
+      }
+    } catch (err) {
+      setError(err.message || 'Google Authentication failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Submit Google Profile Completion (Gender + Hostel Block)
+  const handleCompleteGoogleProfile = async (e) => {
+    e.preventDefault();
+    if (!googleProfileState.gender) {
+      setError('Please select your gender.');
+      return;
+    }
+    if (!googleProfileState.hostelBlock) {
+      setError('Please select your hostel block.');
+      return;
+    }
+
+    setError('');
+    setIsLoading(true);
+    try {
+      const res = await googleAuth(
+        googleProfileState.credential,
+        googleProfileState.gender,
+        googleProfileState.hostelBlock
+      );
+      if (!res.success) {
+        setError(res.message);
+      }
+    } catch (err) {
+      setError(err.message || 'Profile registration failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Handle single digit OTP input change
   const handleOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return; // Allow only digits
+    if (!/^\d*$/.test(value)) return;
 
     const newOtpDigits = [...otpDigits];
-    // Take last entered character if multiple typed
     newOtpDigits[index] = value.slice(-1);
     setOtpDigits(newOtpDigits);
 
-    // Auto-advance to next box if character entered
     if (value && index < 5) {
       otpInputRefs[index + 1].current?.focus();
     }
   };
 
-  // Handle keydown events for backspace navigation
   const handleOtpKeyDown = (index, e) => {
     if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
       otpInputRefs[index - 1].current?.focus();
     }
   };
 
-  // Handle OTP paste
   const handleOtpPaste = (e) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').trim();
-    if (!/^\d{6}$/.test(pastedData)) return; // Must be 6 digits
+    if (!/^\d{6}$/.test(pastedData)) return;
 
     const digits = pastedData.split('');
     setOtpDigits(digits);
     otpInputRefs[5].current?.focus();
   };
 
-  // Switch between Login and Sign Up
   const toggleAuthMode = () => {
     setIsLogin(!isLogin);
     setSignupStep(1);
+    setGoogleProfileState(null);
     setError('');
     setSuccessMsg('');
     setDevOtp('');
     setOtpDigits(['', '', '', '', '', '']);
   };
 
-  // Step 1 Submission or Resend OTP
   const triggerSendOtp = async (emailToUse) => {
     setError('');
     setSuccessMsg('');
@@ -124,7 +179,6 @@ const Auth = () => {
     }
   };
 
-  // Form Submit Handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -143,7 +197,6 @@ const Auth = () => {
       return;
     }
 
-    // Registration Flow
     if (signupStep === 1) {
       if (!formData.email.endsWith('@chitkara.edu.in')) {
         setError('Only @chitkara.edu.in email addresses are allowed for registration.');
@@ -201,13 +254,21 @@ const Auth = () => {
       <div className="glass-panel auth-card">
         <div className="auth-header text-center">
           <h2 className="heading-lg">
-            {isLogin ? 'Welcome Back' : signupStep === 1 ? 'Join HostelAdda' : 'Verify Email'}
+            {googleProfileState
+              ? 'Complete Profile'
+              : isLogin
+              ? 'Welcome Back'
+              : signupStep === 1
+              ? 'Join HostelAdda'
+              : 'Verify Email'}
           </h2>
           <p className="text-body">
-            {isLogin
-              ? 'Login to access your hostel rooms'
+            {googleProfileState
+              ? 'Select your Hostel & Gender to complete sign up'
+              : isLogin
+              ? 'Login with your Chitkara account'
               : signupStep === 1
-              ? 'Register with your Chitkara email'
+              ? '1-Click Google Sign-In or Email Verification'
               : `We sent a 6-digit OTP to ${formData.email}`}
           </p>
         </div>
@@ -218,187 +279,270 @@ const Auth = () => {
           </div>
         )}
 
-        {successMsg && signupStep === 2 && (
-          <div style={{ color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', textAlign: 'center', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-            <CheckCircle size={16} />
-            {successMsg}
+        {/* 1-CLICK GOOGLE SSO BUTTON */}
+        {!googleProfileState && signupStep === 1 && (
+          <div className="google-sso-wrapper">
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Google Sign-In was cancelled or failed.')}
+                shape="pill"
+                size="large"
+                width="340"
+                theme={isDark ? 'filled_black' : 'outline'}
+                text="continue_with"
+                logo_alignment="left"
+              />
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#818cf8', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <ShieldCheck size={14} /> Official @chitkara.edu.in accounts only
+            </div>
+
+            <div className="auth-divider w-100">
+              <span>OR USE EMAIL</span>
+            </div>
           </div>
         )}
 
-        {devOtp && signupStep === 2 && (
-          <div className="otp-dev-banner">
-            🔑 <strong>Dev Mode OTP:</strong> <span style={{ letterSpacing: '2px', fontSize: '1.1rem', fontWeight: 'bold' }}>{devOtp}</span>
-            <div style={{ fontSize: '0.75rem', opacity: 0.85, marginTop: '2px' }}>(Logged to backend console)</div>
-          </div>
-        )}
+        {/* GOOGLE NEW USER PROFILE COMPLETION FORM */}
+        {googleProfileState ? (
+          <form onSubmit={handleCompleteGoogleProfile} className="auth-form">
+            <div className="google-profile-card">
+              {googleProfileState.picture ? (
+                <img src={googleProfileState.picture} alt="Profile" className="google-avatar" />
+              ) : (
+                <User size={32} className="google-avatar" />
+              )}
+              <div>
+                <div className="google-user-name">{googleProfileState.name}</div>
+                <div className="google-user-email">{googleProfileState.email}</div>
+              </div>
+            </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          {/* LOGIN FORM or SIGNUP STEP 1 */}
-          {(isLogin || signupStep === 1) && (
-            <>
-              {!isLogin && (
-                <>
-                  <div className="input-group">
-                    <label className="input-label">Full Name</label>
-                    <div className="input-with-icon">
-                      <User size={18} className="input-icon" />
-                      <input
-                        type="text"
-                        name="name"
-                        className="input-field"
-                        placeholder="John Doe"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                  </div>
+            <div className="input-group">
+              <label className="input-label">Gender</label>
+              <div className="input-with-icon">
+                <User size={18} className="input-icon" />
+                <select
+                  name="gender"
+                  className="input-field"
+                  value={googleProfileState.gender}
+                  onChange={(e) => setGoogleProfileState({ ...googleProfileState, gender: e.target.value, hostelBlock: '' })}
+                  required
+                  style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                >
+                  <option value="" disabled>Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Others">Others</option>
+                </select>
+              </div>
+            </div>
 
-                  <div className="input-group">
-                    <label className="input-label">Gender</label>
-                    <div className="input-with-icon">
-                      <User size={18} className="input-icon" />
-                      <select
-                        name="gender"
-                        className="input-field"
-                        value={formData.gender}
-                        onChange={handleChange}
-                        required
-                        style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-                      >
-                        <option value="" disabled>Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Others">Others</option>
-                      </select>
-                    </div>
-                  </div>
+            <div className="input-group">
+              <label className="input-label">Hostel Name & Block</label>
+              <div className="input-with-icon">
+                <Building size={18} className="input-icon" />
+                {googleProfileState.gender ? (
+                  <select
+                    name="hostelBlock"
+                    className="input-field"
+                    value={googleProfileState.hostelBlock}
+                    onChange={(e) => setGoogleProfileState({ ...googleProfileState, hostelBlock: e.target.value })}
+                    required
+                    style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                  >
+                    <option value="" disabled>Select Hostel</option>
+                    {(googleProfileState.gender === 'Male' ? maleHostels : googleProfileState.gender === 'Female' ? femaleHostels : [...maleHostels, ...femaleHostels]).map((hostel) => (
+                      <option key={hostel} value={hostel}>
+                        {hostel}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Select Gender First"
+                    disabled
+                    style={{ opacity: 0.7 }}
+                  />
+                )}
+              </div>
+            </div>
 
-                  <div className="input-group">
-                    <label className="input-label">Hostel Name & Block</label>
-                    <div className="input-with-icon">
-                      <Building size={18} className="input-icon" />
-                      {formData.gender ? (
-                        <select
-                          name="hostelBlock"
+            <button type="submit" className="btn btn-primary w-100 mt-4" disabled={isLoading}>
+              {isLoading ? 'Completing Registration...' : 'Complete Sign Up'}
+            </button>
+          </form>
+        ) : (
+          /* STANDARD LOGIN / SIGNUP FORM */
+          <form onSubmit={handleSubmit} className="auth-form">
+            {(isLogin || signupStep === 1) && (
+              <>
+                {!isLogin && (
+                  <>
+                    <div className="input-group">
+                      <label className="input-label">Full Name</label>
+                      <div className="input-with-icon">
+                        <User size={18} className="input-icon" />
+                        <input
+                          type="text"
+                          name="name"
                           className="input-field"
-                          value={formData.hostelBlock}
+                          placeholder="John Doe"
+                          value={formData.name}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="input-group">
+                      <label className="input-label">Gender</label>
+                      <div className="input-with-icon">
+                        <User size={18} className="input-icon" />
+                        <select
+                          name="gender"
+                          className="input-field"
+                          value={formData.gender}
                           onChange={handleChange}
                           required
                           style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
                         >
-                          <option value="" disabled>Select Hostel</option>
-                          {availableHostels.map((hostel) => (
-                            <option key={hostel} value={hostel}>
-                              {hostel}
-                            </option>
-                          ))}
+                          <option value="" disabled>Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Others">Others</option>
                         </select>
-                      ) : (
-                        <input
-                          type="text"
-                          className="input-field"
-                          placeholder="Select Gender First"
-                          disabled
-                          style={{ opacity: 0.7 }}
-                        />
-                      )}
+                      </div>
                     </div>
+
+                    <div className="input-group">
+                      <label className="input-label">Hostel Name & Block</label>
+                      <div className="input-with-icon">
+                        <Building size={18} className="input-icon" />
+                        {formData.gender ? (
+                          <select
+                            name="hostelBlock"
+                            className="input-field"
+                            value={formData.hostelBlock}
+                            onChange={handleChange}
+                            required
+                            style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                          >
+                            <option value="" disabled>Select Hostel</option>
+                            {availableHostels.map((hostel) => (
+                              <option key={hostel} value={hostel}>
+                                {hostel}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            className="input-field"
+                            placeholder="Select Gender First"
+                            disabled
+                            style={{ opacity: 0.7 }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="input-group">
+                  <label className="input-label">University Email</label>
+                  <div className="input-with-icon">
+                    <Mail size={18} className="input-icon" />
+                    <input
+                      type="email"
+                      name="email"
+                      className="input-field"
+                      placeholder="student@chitkara.edu.in"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
-                </>
-              )}
-
-              <div className="input-group">
-                <label className="input-label">University Email</label>
-                <div className="input-with-icon">
-                  <Mail size={18} className="input-icon" />
-                  <input
-                    type="email"
-                    name="email"
-                    className="input-field"
-                    placeholder="student@chitkara.edu.in"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
+                  {!isLogin && (
+                    <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '0.25rem' }}>
+                      Only @chitkara.edu.in emails allowed.
+                    </small>
+                  )}
                 </div>
-                {!isLogin && (
-                  <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '0.25rem' }}>
-                    Only @chitkara.edu.in emails allowed.
-                  </small>
-                )}
-              </div>
 
-              <div className="input-group">
-                <label className="input-label">Password</label>
-                <div className="input-with-icon">
-                  <Lock size={18} className="input-icon" />
-                  <input
-                    type="password"
-                    name="password"
-                    className="input-field"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
+                <div className="input-group">
+                  <label className="input-label">Password</label>
+                  <div className="input-with-icon">
+                    <Lock size={18} className="input-icon" />
+                    <input
+                      type="password"
+                      name="password"
+                      className="input-field"
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {!isLogin && signupStep === 2 && (
+              <div className="otp-container">
+                <div className="otp-inputs" onPaste={handleOtpPaste}>
+                  {otpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={otpInputRefs[idx]}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      className="otp-digit-box"
+                      value={digit}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      autoFocus={idx === 0}
+                    />
+                  ))}
+                </div>
+
+                <div className="otp-resend-row">
+                  <span className="back-link" onClick={() => { setSignupStep(1); setError(''); setSuccessMsg(''); }}>
+                    <ArrowLeft size={14} /> Change Email
+                  </span>
+
+                  {resendTimer > 0 ? (
+                    <span>Resend code in <strong>{resendTimer}s</strong></span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn-resend"
+                      onClick={() => triggerSendOtp(formData.email)}
+                      disabled={isLoading}
+                    >
+                      <RefreshCw size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                      Resend Code
+                    </button>
+                  )}
                 </div>
               </div>
-            </>
-          )}
+            )}
 
-          {/* SIGNUP STEP 2: OTP VERIFICATION */}
-          {!isLogin && signupStep === 2 && (
-            <div className="otp-container">
-              <div className="otp-inputs" onPaste={handleOtpPaste}>
-                {otpDigits.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    ref={otpInputRefs[idx]}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    className="otp-digit-box"
-                    value={digit}
-                    onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    autoFocus={idx === 0}
-                  />
-                ))}
-              </div>
-
-              <div className="otp-resend-row">
-                <span className="back-link" onClick={() => { setSignupStep(1); setError(''); setSuccessMsg(''); }}>
-                  <ArrowLeft size={14} /> Change Email
-                </span>
-
-                {resendTimer > 0 ? (
-                  <span>Resend code in <strong>{resendTimer}s</strong></span>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn-resend"
-                    onClick={() => triggerSendOtp(formData.email)}
-                    disabled={isLoading}
-                  >
-                    <RefreshCw size={12} style={{ display: 'inline', marginRight: '4px' }} />
-                    Resend Code
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          <button type="submit" className="btn btn-primary w-100 mt-4" disabled={isLoading}>
-            {isLoading
-              ? 'Processing...'
-              : isLogin
-              ? 'Login'
-              : signupStep === 1
-              ? 'Send Verification Code'
-              : 'Verify & Sign Up'}
-          </button>
-        </form>
+            <button type="submit" className="btn btn-primary w-100 mt-4" disabled={isLoading}>
+              {isLoading
+                ? 'Processing...'
+                : isLogin
+                ? 'Login'
+                : signupStep === 1
+                ? 'Send Verification Code'
+                : 'Verify & Sign Up'}
+            </button>
+          </form>
+        )}
 
         <div className="auth-footer text-center">
           <p className="text-small">

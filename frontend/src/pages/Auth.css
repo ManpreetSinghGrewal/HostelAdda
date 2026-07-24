@@ -170,3 +170,64 @@
 .back-link:hover {
   color: var(--text-primary, #f8fafc);
 }
+
+/* Google Single Sign-On Styles */
+.google-sso-wrapper {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-light, #334155);
+}
+
+.auth-divider span {
+  padding: 0 0.75rem;
+}
+
+.google-profile-card {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.google-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #6366f1;
+}
+
+.google-user-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary, #f8fafc);
+}
+
+.google-user-email {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #94a3b8);
+}

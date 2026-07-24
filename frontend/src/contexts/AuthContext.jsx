@@ -79,6 +79,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const googleAuth = async (credential, gender, hostelBlock) => {
+    try {
+      const { data } = await axios.post(`${API_URL}/api/auth/google`, {
+        credential,
+        gender,
+        hostelBlock
+      });
+
+      if (data.requiresProfileDetails) {
+        return {
+          requiresProfileDetails: true,
+          email: data.email,
+          name: data.name,
+          picture: data.picture,
+          message: data.message
+        };
+      }
+
+      setUser(data);
+      localStorage.setItem('userInfo', JSON.stringify(data));
+      navigate('/dashboard');
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Google Sign-In failed'
+      };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('userInfo');
     setUser(null);
@@ -86,7 +116,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateProfile, sendOtp }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateProfile, sendOtp, googleAuth }}>
       {children}
     </AuthContext.Provider>
   );
