@@ -1,22 +1,7 @@
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-
-// Lazily initialize transporter to ensure process.env is fully loaded
-let transporter;
-const getTransporter = () => {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-  }
-  return transporter;
-};
+const { sendOtpEmail } = require('../config/mailer');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -31,12 +16,12 @@ const sendOtp = async (req, res) => {
   try {
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'An account with this email already exists' });
     }
 
     // Generate 6 digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(`[DEBUG] OTP generated for ${email}: ${otp}`);
+    console.log(`[AUTH] OTP generated for ${email}: ${otp}`);
 
     // Upsert OTP in database
     await OTP.findOneAndUpdate(
@@ -45,20 +30,21 @@ const sendOtp = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'HostelAdda Registration OTP',
-      text: `Your OTP for HostelAdda registration is: ${otp}\nThis OTP is valid for 5 minutes.`,
-    };
+    // Send Email
+    const mailResult = await sendOtpEmail(email, otp);
 
-    // Send email using the cached transporter and await it to ensure delivery
-    await getTransporter().sendMail(mailOptions);
+    if (mailResult.isDevFallback) {
+      return res.status(200).json({
+        message: 'OTP generated. (Dev Mode: Printed to server console)',
+        isDevFallback: true,
+        devOtp: otp
+      });
+    }
 
-    res.status(200).json({ message: 'OTP sent successfully' });
+    res.status(200).json({ message: `OTP sent successfully to ${email}` });
   } catch (error) {
     console.error('Error sending OTP:', error);
-    res.status(500).json({ message: 'Error sending OTP. Please ensure email credentials are set in the backend.' });
+    res.status(500).json({ message: 'Error generating OTP. Please try again.' });
   }
 };
 

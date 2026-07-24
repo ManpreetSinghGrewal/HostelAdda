@@ -7,12 +7,13 @@
 
 .auth-card {
   width: 100%;
-  max-width: 450px;
-  padding: 3rem 2.5rem;
+  max-width: 480px;
+  padding: 2.5rem 2.25rem;
+  border-radius: 16px;
 }
 
 .auth-header {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .auth-form {
@@ -65,4 +66,107 @@
 .auth-link:hover {
   color: var(--accent-hover);
   text-decoration: underline;
+}
+
+/* OTP 6-Digit Component Styles */
+.otp-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 1.25rem 0;
+}
+
+.otp-inputs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.otp-digit-box {
+  width: 48px;
+  height: 54px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-light, #334155);
+  background: var(--bg-secondary, #1e293b);
+  color: var(--text-primary, #f8fafc);
+  transition: all 0.2s ease-in-out;
+  outline: none;
+}
+
+.otp-digit-box:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+  transform: translateY(-2px);
+}
+
+.otp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  color: #818cf8;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+}
+
+.otp-dev-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
+.otp-resend-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #94a3b8);
+  margin-top: 0.5rem;
+}
+
+.btn-resend {
+  background: none;
+  border: none;
+  color: #6366f1;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.btn-resend:disabled {
+  color: var(--text-muted, #64748b);
+  cursor: not-allowed;
+}
+
+.btn-resend:hover:not(:disabled) {
+  color: #818cf8;
+  text-decoration: underline;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.back-link:hover {
+  color: var(--text-primary, #f8fafc);
 }

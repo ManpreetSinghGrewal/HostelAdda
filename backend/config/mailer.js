@@ -1,0 +1,92 @@
+const nodemailer = require('nodemailer');
+
+// Create transporter dynamically based on env variables
+const createTransporter = () => {
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+
+  if (emailUser && emailPass && emailPass !== 'YOUR_SENDGRID_API_KEY_HERE') {
+    if (process.env.SMTP_HOST) {
+      return nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+          user: process.env.SMTP_USER || emailUser,
+          pass: process.env.SMTP_PASS || emailPass,
+        },
+      });
+    }
+
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: emailUser,
+        pass: emailPass,
+      },
+    });
+  }
+
+  return null;
+};
+
+const sendOtpEmail = async (toEmail, otp) => {
+  const transporter = createTransporter();
+
+  const htmlContent = `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border-radius: 12px; background-color: #0f172a; color: #f8fafc; border: 1px solid #334155;">
+      <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #334155;">
+        <h1 style="color: #6366f1; margin: 0; font-size: 28px;">HostelAdda</h1>
+        <p style="color: #94a3b8; margin-top: 5px; font-size: 14px;">Chitkara University Hostel Community</p>
+      </div>
+      
+      <div style="padding: 25px 10px; text-align: center;">
+        <h2 style="color: #f8fafc; font-size: 20px; margin-bottom: 15px;">Email Verification Code</h2>
+        <p style="color: #cbd5e1; font-size: 15px; line-height: 1.5; margin-bottom: 25px;">
+          Use the following 6-digit One-Time Password (OTP) to complete your HostelAdda registration:
+        </p>
+        
+        <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); border-radius: 10px; padding: 18px; display: inline-block; letter-spacing: 8px; font-size: 32px; font-weight: bold; color: #ffffff; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); margin-bottom: 20px;">
+          ${otp}
+        </div>
+        
+        <p style="color: #94a3b8; font-size: 13px; margin-top: 20px;">
+          This OTP is valid for <strong>5 minutes</strong>. Do not share this code with anyone.
+        </p>
+      </div>
+      
+      <div style="text-align: center; border-top: 1px solid #334155; padding-top: 15px; font-size: 12px; color: #64748b;">
+        <p>If you didn't request this email, please ignore it.</p>
+        <p>&copy; ${new Date().getFullYear()} HostelAdda (Chitmeet)</p>
+      </div>
+    </div>
+  `;
+
+  if (!transporter) {
+    console.log(`\n======================================================`);
+    console.log(`[DEV OTP NOTIFICATION] Mail server credentials not set in backend/.env`);
+    console.log(`[DEV OTP NOTIFICATION] OTP for ${toEmail}: ${otp}`);
+    console.log(`======================================================\n`);
+    return { sent: false, isDevFallback: true };
+  }
+
+  try {
+    await transporter.sendMail({
+      from: `"HostelAdda" <${process.env.EMAIL_USER || 'no-reply@chitkara.edu.in'}>`,
+      to: toEmail,
+      subject: `${otp} is your HostelAdda Registration OTP`,
+      text: `Your OTP for HostelAdda registration is: ${otp}. Valid for 5 minutes.`,
+      html: htmlContent,
+    });
+    console.log(`[EMAIL SENT SUCCESS] OTP sent to ${toEmail}`);
+    return { sent: true, isDevFallback: false };
+  } catch (error) {
+    console.error(`[EMAIL SEND FAILED] Error sending email to ${toEmail}:`, error.message);
+    console.log(`\n======================================================`);
+    console.log(`[DEV OTP FALLBACK] OTP for ${toEmail}: ${otp}`);
+    console.log(`======================================================\n`);
+    return { sent: false, isDevFallback: true, error: error.message };
+  }
+};
+
+module.exports = { sendOtpEmail };
