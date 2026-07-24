@@ -1,16 +1,12 @@
-// Chitmeet Authentication Component
+// Chitmeet Authentication Component - Pure Google SSO
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, Lock, Mail, Building, Sun, Moon, ShieldCheck, KeyRound, ArrowRight } from 'lucide-react';
+import { User, Building, Sun, Moon, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { AuthContext } from '../contexts/AuthContext';
 import { ThemeContext } from '../contexts/ThemeContext';
 import './Auth.css';
 
 const Auth = () => {
-  const [showPasswordLogin, setShowPasswordLogin] = useState(false);
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  
   // Google New User Setup State
   const [googleSetupState, setGoogleSetupState] = useState(null);
   
@@ -20,10 +16,8 @@ const Auth = () => {
   const maleHostels = ['FRANKLIN-A', 'FRANKLIN-B', 'ARCHIMEDIES-A', 'ARCHIMEDIES-B', 'ARMSTRONG', 'MAGELLAN', 'MARCOPOLO'];
   const femaleHostels = ['NGH-A', 'NGH-B', 'VASCO', 'COLUMBUS', 'IBN-A', 'IBN-B', 'IBN-C', 'PIE-A', 'PIE-B', 'PIE-C'];
 
-  const { login, googleAuth } = useContext(AuthContext);
+  const { googleAuth } = useContext(AuthContext);
   const { isDark, toggleTheme } = useContext(ThemeContext);
-
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   // Handle 1-Click Google OAuth Success
   const handleGoogleSuccess = async (credentialResponse) => {
@@ -39,8 +33,7 @@ const Auth = () => {
           name: res.name,
           picture: res.picture,
           gender: '',
-          hostelBlock: '',
-          password: ''
+          hostelBlock: ''
         });
       } else if (!res.success) {
         setError(res.message);
@@ -52,7 +45,7 @@ const Auth = () => {
     }
   };
 
-  // Submit First-Time Profile Setup (Gender, Hostel Block, Optional Password)
+  // Submit First-Time Profile Setup (Gender & Hostel Block)
   const handleCompleteSetup = async (e) => {
     e.preventDefault();
     if (!googleSetupState.gender) {
@@ -70,30 +63,13 @@ const Auth = () => {
       const res = await googleAuth(
         googleSetupState.credential,
         googleSetupState.gender,
-        googleSetupState.hostelBlock,
-        googleSetupState.password
+        googleSetupState.hostelBlock
       );
       if (!res.success) {
         setError(res.message);
       }
     } catch (err) {
       setError(err.message || 'Profile setup failed.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Password Login Submit Handler
-  const handlePasswordLoginSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const res = await login(formData.email, formData.password);
-      if (!res.success) setError(res.message);
-    } catch (err) {
-      setError(err.message || 'Login failed.');
     } finally {
       setIsLoading(false);
     }
@@ -113,18 +89,12 @@ const Auth = () => {
       <div className="glass-panel auth-card">
         <div className="auth-header text-center">
           <h2 className="heading-lg">
-            {googleSetupState
-              ? 'Complete Setup'
-              : showPasswordLogin
-              ? 'Login with Password'
-              : 'Join HostelAdda'}
+            {googleSetupState ? 'Complete Profile' : 'Welcome to HostelAdda'}
           </h2>
           <p className="text-body">
             {googleSetupState
-              ? 'Set your Hostel, Gender, and Password for next time'
-              : showPasswordLogin
-              ? 'Enter your Chitkara email & password'
-              : '1-Click Login with your Chitkara Google Account'}
+              ? 'Select your Gender & Hostel Block to complete setup'
+              : 'Official Chitkara University Student Portal'}
           </p>
         </div>
 
@@ -201,71 +171,14 @@ const Auth = () => {
               </div>
             </div>
 
-            <div className="input-group">
-              <label className="input-label">Set Password for Next Time (Optional)</label>
-              <div className="input-with-icon">
-                <KeyRound size={18} className="input-icon" />
-                <input
-                  type="password"
-                  name="password"
-                  className="input-field"
-                  placeholder="Create a password (Optional)"
-                  value={googleSetupState.password}
-                  onChange={(e) => setGoogleSetupState({ ...googleSetupState, password: e.target.value })}
-                />
-              </div>
-              <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.2rem' }}>
-                Optional: Allows logging in directly using email & password next time.
-              </small>
-            </div>
-
             <button type="submit" className="btn btn-primary w-100 mt-4" disabled={isLoading}>
-              {isLoading ? 'Completing Setup...' : 'Complete Setup & Enter HostelAdda'}
-            </button>
-          </form>
-        ) : showPasswordLogin ? (
-          /* TRADITIONAL PASSWORD LOGIN FORM */
-          <form onSubmit={handlePasswordLoginSubmit} className="auth-form">
-            <div className="input-group">
-              <label className="input-label">University Email</label>
-              <div className="input-with-icon">
-                <Mail size={18} className="input-icon" />
-                <input
-                  type="email"
-                  name="email"
-                  className="input-field"
-                  placeholder="student@chitkara.edu.in"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="input-group">
-              <label className="input-label">Password</label>
-              <div className="input-with-icon">
-                <Lock size={18} className="input-icon" />
-                <input
-                  type="password"
-                  name="password"
-                  className="input-field"
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <button type="submit" className="btn btn-primary w-100 mt-4" disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? 'Completing Setup...' : 'Enter HostelAdda'}
             </button>
           </form>
         ) : (
-          /* PURE 1-CLICK GOOGLE SSO VIEW (DEFAULT) */
+          /* PURE 1-CLICK GOOGLE SSO VIEW */
           <div className="google-sso-wrapper" style={{ padding: '1rem 0' }}>
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => setError('Google Sign-In was cancelled or failed.')}
@@ -278,27 +191,18 @@ const Auth = () => {
               />
             </div>
 
-            <div style={{ fontSize: '0.8rem', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.8rem', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'center', justifyContent: 'center' }}>
               <ShieldCheck size={16} /> Official @chitkara.edu.in accounts only
+            </div>
+
+            <div style={{ marginTop: '1.5rem', padding: '0.85rem', background: 'rgba(99, 102, 241, 0.06)', borderRadius: '10px', fontSize: '0.8rem', color: 'var(--text-secondary, #94a3b8)', lineHeight: '1.4' }}>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary, #f8fafc)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CheckCircle2 size={14} style={{ color: '#10b981' }} /> Instant & Verified Access
+              </div>
+              Sign in with your Chitkara University Google account for 1-click verified access to hostel rooms and peer chat.
             </div>
           </div>
         )}
-
-        <div className="auth-footer text-center">
-          {!googleSetupState && (
-            <p className="text-small">
-              {showPasswordLogin ? (
-                <span className="auth-link" onClick={() => { setShowPasswordLogin(false); setError(''); }}>
-                  <ArrowRight size={12} style={{ display: 'inline', transform: 'rotate(180deg)' }} /> Back to 1-Click Google Sign-In
-                </span>
-              ) : (
-                <span className="auth-link" onClick={() => { setShowPasswordLogin(true); setError(''); }}>
-                  Log in with Email & Password
-                </span>
-              )}
-            </p>
-          )}
-        </div>
       </div>
     </div>
   );
