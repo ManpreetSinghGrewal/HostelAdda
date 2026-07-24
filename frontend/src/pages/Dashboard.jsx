@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Video, MessageSquare, LogOut, Hash, Shuffle, Home, Users, MicOff, Gamepad2, BookOpen, ShieldCheck, Edit2, X, MoreVertical, Sun, Moon, LogIn, Sparkles, MessageCircle } from 'lucide-react';
+import { Video, MessageSquare, LogOut, Hash, Shuffle, Home, Users, MicOff, Gamepad2, BookOpen, ShieldCheck, Edit2, X, MoreVertical, Sun, Moon, LogIn, Sparkles, MessageCircle, Search, Filter } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
 import { SocketContext } from '../contexts/SocketContext';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -21,6 +21,10 @@ const Dashboard = () => {
   const [editHostel, setEditHostel] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // New Search & Category Filtering State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all');
   
   const navigate = useNavigate();
   const { user, logout, updateProfile } = useContext(AuthContext);
@@ -33,32 +37,48 @@ const Dashboard = () => {
       _id: 'default-1',
       roomId: 'franklin-lounge',
       name: 'Franklin Block Lounge',
-      description: 'Franklin Hostel A & B student hub. Casual hangout and tech discussions.',
+      description: 'Franklin Hostel A & B student hub. Tech, projects, and casual hangouts.',
       activeUsers: 6,
-      category: 'hostel'
+      category: 'boys'
     },
     {
       _id: 'default-2',
-      roomId: 'ngh-girls-hub',
-      name: 'NGH Girls Hub',
-      description: 'Exclusive lounge for NGH Hostel A & B students. Peer chat & study.',
-      activeUsers: 4,
-      category: 'hostel'
+      roomId: 'archimedes-lounge',
+      name: 'Archimedes Block Lounge',
+      description: 'CSE, Coding, Assignment help, and developer chats.',
+      activeUsers: 9,
+      category: 'boys'
     },
     {
       _id: 'default-3',
-      roomId: 'gaming-esports',
-      name: 'Gaming & Esports Lounge',
-      description: 'Valorant, BGMI, GTA, and multiplayer gaming matchmaking for Chitkara hostels.',
-      activeUsers: 8,
-      category: 'gaming'
+      roomId: 'ngh-girls-hub',
+      name: 'NGH Girls Hub',
+      description: 'Exclusive lounge for NGH Hostel A & B students. Peer chat & academic discussions.',
+      activeUsers: 5,
+      category: 'girls'
     },
     {
       _id: 'default-4',
+      roomId: 'vasco-columbus-hub',
+      name: 'Vasco & Columbus Hub',
+      description: 'Girls Hostel discussion room for campus events, creative projects, and general chat.',
+      activeUsers: 4,
+      category: 'girls'
+    },
+    {
+      _id: 'default-5',
+      roomId: 'gaming-esports',
+      name: 'Gaming & Esports Lounge',
+      description: 'Valorant, BGMI, GTA, and multiplayer gaming matchmaking for Chitkara hostels.',
+      activeUsers: 12,
+      category: 'gaming'
+    },
+    {
+      _id: 'default-6',
       roomId: 'late-night-study',
       name: 'Late Night Study & Code',
       description: 'Quiet study, exam revision, assignment collaboration, and coding help.',
-      activeUsers: 5,
+      activeUsers: 7,
       category: 'study'
     }
   ];
@@ -179,7 +199,13 @@ const Dashboard = () => {
     }
   };
 
-  const displayRooms = rooms.length > 0 ? rooms : defaultRooms;
+  const displayRooms = (rooms.length > 0 ? rooms : defaultRooms).filter(room => {
+    const matchesSearch = room.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (room.description && room.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    if (activeCategory === 'all') return matchesSearch;
+    return matchesSearch && (room.category === activeCategory);
+  });
 
   return (
     <div className="dashboard-container">
@@ -350,38 +376,96 @@ const Dashboard = () => {
           </button>
         </div>
 
-        <div className="rooms-section-header flex-between">
+        {/* Search Bar & Category Filter Bar */}
+        <div className="rooms-section-header flex-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h3 className="heading-md">Available Rooms</h3>
             <p className="text-small">Select a room to enter text and video discussion</p>
           </div>
+
+          <div className="search-box-wrapper">
+            <Search size={16} className="search-box-icon" />
+            <input
+              type="text"
+              placeholder="Search room name or block..."
+              className="input-field search-box-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Category Tabs */}
+        <div className="category-filter-bar">
+          <button 
+            className={`filter-chip ${activeCategory === 'all' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('all')}
+          >
+            All Rooms
+          </button>
+          <button 
+            className={`filter-chip ${activeCategory === 'boys' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('boys')}
+          >
+            Boys Hostels
+          </button>
+          <button 
+            className={`filter-chip ${activeCategory === 'girls' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('girls')}
+          >
+            Girls Hostels
+          </button>
+          <button 
+            className={`filter-chip ${activeCategory === 'gaming' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('gaming')}
+          >
+            Gaming & Esports
+          </button>
+          <button 
+            className={`filter-chip ${activeCategory === 'study' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('study')}
+          >
+            Study & Code
+          </button>
         </div>
 
         <div className="rooms-grid">
-          {displayRooms.map(room => (
-            <div key={room._id} className="glass-card room-card">
-              <div className="room-card-header flex-between">
-                <div className="room-icon flex-center">
-                  <Hash size={24} color="#ea580c" />
+          {displayRooms.length > 0 ? (
+            displayRooms.map(room => (
+              <div key={room._id} className="glass-card room-card">
+                <div className="room-card-header flex-between">
+                  <div className="room-icon flex-center">
+                    <Hash size={24} color="#ea580c" />
+                  </div>
+                  <span className="badge badge-dark">{room.activeUsers || 0} active users</span>
                 </div>
-                <span className="badge badge-dark">{room.activeUsers || 0} active users</span>
+                <h3 className="heading-md room-title">{room.name}</h3>
+                <div className="room-types">
+                  <span className="type-indicator"><MessageCircle size={14} /> Real-time Chat</span>
+                  <span className="type-indicator" style={{ marginLeft: '1rem' }}><Video size={14} /> Video Enabled</span>
+                </div>
+                <p className="text-small text-muted mt-4 mb-4">
+                  {room.description || `Join this room to discuss with peers.`}
+                </p>
+                <button 
+                  className="btn btn-primary w-100 mt-auto"
+                  onClick={() => handleEnterRoom(room.roomId)}
+                >
+                  Enter Room
+                </button>
               </div>
-              <h3 className="heading-md room-title">{room.name}</h3>
-              <div className="room-types">
-                <span className="type-indicator"><MessageCircle size={14} /> Real-time Chat</span>
-                <span className="type-indicator" style={{ marginLeft: '1rem' }}><Video size={14} /> Video Enabled</span>
-              </div>
-              <p className="text-small text-muted mt-4 mb-4">
-                {room.description || `Join this room to discuss with peers.`}
-              </p>
+            ))
+          ) : (
+            <div className="glass-card text-center" style={{ gridColumn: '1 / -1', padding: '3rem 1.5rem' }}>
+              <p className="text-body text-muted">No rooms match your search query or selected category.</p>
               <button 
-                className="btn btn-primary w-100 mt-auto"
-                onClick={() => handleEnterRoom(room.roomId)}
+                className="btn btn-secondary mt-4"
+                onClick={() => { setSearchQuery(''); setActiveCategory('all'); }}
               >
-                Enter Room
+                Reset Filters
               </button>
             </div>
-          ))}
+          )}
         </div>
 
         <div className="safety-banner flex-between mt-8">
