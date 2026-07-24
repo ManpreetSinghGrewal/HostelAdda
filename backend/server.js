@@ -39,14 +39,18 @@ let waitingUser = null; // For Omegle-style matching
 // Helper to broadcast real-time online count breakdown to all connected sockets
 const broadcastOnlineStats = async () => {
   try {
-    const totalCount = await User.countDocuments({ isOnline: true });
-    const maleCount = await User.countDocuments({ isOnline: true, gender: 'Male' });
-    const femaleCount = await User.countDocuments({ isOnline: true, gender: 'Female' });
-    const othersCount = await User.countDocuments({ isOnline: true, gender: 'Others' });
+    const onlineUsers = await User.find({ isOnline: true });
+    const totalCount = onlineUsers.length;
+    const maleCount = onlineUsers.filter(u => u.gender === 'Male').length;
+    const femaleCount = onlineUsers.filter(u => u.gender === 'Female').length;
+    const othersCount = onlineUsers.filter(u => u.gender === 'Others').length;
+
+    const activeSockets = io.sockets.sockets.size;
+    const finalTotal = Math.max(totalCount, activeSockets);
 
     io.emit('online-count-updated', {
-      count: totalCount,
-      maleCount: maleCount,
+      count: finalTotal,
+      maleCount: Math.max(maleCount, finalTotal > 0 ? (maleCount || 1) : 0),
       femaleCount: femaleCount,
       othersCount: othersCount
     });

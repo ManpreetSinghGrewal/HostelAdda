@@ -9,15 +9,15 @@ export const SocketProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
-    if (user) {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-      const newSocket = io(API_URL, {
-        query: { userId: user._id }
-      });
-      setSocket(newSocket);
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+    const newSocket = io(API_URL, {
+      query: { userId: user ? user._id : 'guest' }
+    });
+    setSocket(newSocket);
 
-      return () => newSocket.close();
-    }
+    return () => {
+      newSocket.close();
+    };
   }, [user]);
 
   return (

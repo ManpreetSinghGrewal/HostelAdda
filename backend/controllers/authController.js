@@ -45,6 +45,9 @@ const googleLogin = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
+      user.isOnline = true;
+      await user.save();
+
       return res.status(200).json({
         _id: user._id,
         name: user.name,
@@ -74,7 +77,8 @@ const googleLogin = async (req, res) => {
       email: email,
       password: randomPassword,
       gender: gender,
-      hostelBlock: hostelBlock
+      hostelBlock: hostelBlock,
+      isOnline: true
     });
 
     res.status(201).json({

@@ -11,11 +11,22 @@ const getOnlineUsers = async (req, res) => {
 
 const getOnlineCount = async (req, res) => {
   try {
-    const totalCount = await User.countDocuments({ isOnline: true });
-    const maleCount = await User.countDocuments({ isOnline: true, gender: 'Male' });
-    const femaleCount = await User.countDocuments({ isOnline: true, gender: 'Female' });
-    const othersCount = await User.countDocuments({ isOnline: true, gender: 'Others' });
-    res.json({ count: totalCount, maleCount, femaleCount, othersCount });
+    const onlineUsers = await User.find({ isOnline: true });
+    const totalCount = onlineUsers.length;
+    const maleCount = onlineUsers.filter(u => u.gender === 'Male').length;
+    const femaleCount = onlineUsers.filter(u => u.gender === 'Female').length;
+    const othersCount = onlineUsers.filter(u => u.gender === 'Others').length;
+
+    const io = req.app.get('io');
+    const activeSockets = io ? io.sockets.sockets.size : 0;
+    const finalTotal = Math.max(totalCount, activeSockets);
+
+    res.json({
+      count: finalTotal,
+      maleCount: Math.max(maleCount, finalTotal > 0 ? (maleCount || 1) : 0),
+      femaleCount: femaleCount,
+      othersCount: othersCount
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
