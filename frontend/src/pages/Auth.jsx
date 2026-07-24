@@ -1,14 +1,16 @@
-// Chitmeet Authentication Component - Pure Google SSO
+// Chitmeet Authentication Component - Pure Google SSO with Community Guidelines
 import React, { useState, useContext } from 'react';
-import { User, Building, Sun, Moon, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { User, Building, Sun, Moon, ShieldCheck, CheckCircle2, FileText } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { AuthContext } from '../contexts/AuthContext';
 import { ThemeContext } from '../contexts/ThemeContext';
+import TermsModal from '../components/TermsModal';
 import './Auth.css';
 
 const Auth = () => {
   // Google New User Setup State
   const [googleSetupState, setGoogleSetupState] = useState(null);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -77,6 +79,13 @@ const Auth = () => {
 
   return (
     <div className="auth-container flex-center">
+      {/* Terms & Community Guidelines Modal */}
+      <TermsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onAccept={() => setShowTermsModal(false)}
+      />
+
       <button
         className="icon-btn theme-toggle"
         style={{ position: 'absolute', top: '1.5rem', right: '1.5rem' }}
@@ -177,7 +186,7 @@ const Auth = () => {
           </form>
         ) : (
           /* PURE 1-CLICK GOOGLE SSO VIEW */
-          <div className="google-sso-wrapper" style={{ padding: '1rem 0' }}>
+          <div className="google-sso-wrapper" style={{ padding: '0.5rem 0' }}>
             <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
@@ -195,11 +204,21 @@ const Auth = () => {
               <ShieldCheck size={16} /> Official @chitkara.edu.in accounts only
             </div>
 
-            <div style={{ marginTop: '1.5rem', padding: '0.85rem', background: 'rgba(99, 102, 241, 0.06)', borderRadius: '10px', fontSize: '0.8rem', color: 'var(--text-secondary, #94a3b8)', lineHeight: '1.4' }}>
+            <div style={{ marginTop: '1.25rem', padding: '0.85rem', background: 'rgba(99, 102, 241, 0.06)', borderRadius: '10px', fontSize: '0.8rem', color: 'var(--text-secondary, #94a3b8)', lineHeight: '1.4' }}>
               <div style={{ fontWeight: 600, color: 'var(--text-primary, #f8fafc)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <CheckCircle2 size={14} style={{ color: '#10b981' }} /> Instant & Verified Access
               </div>
               Sign in with your Chitkara University Google account for 1-click verified access to hostel rooms and peer chat.
+            </div>
+
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.775rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+              >
+                <FileText size={12} /> Read Community Guidelines & Terms
+              </button>
             </div>
           </div>
         )}

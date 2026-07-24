@@ -1,15 +1,32 @@
-import React, { useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Video, Users, Shield, Sun, Moon } from 'lucide-react';
+import { MessageSquare, Video, Users, Shield, Sun, Moon, FileText } from 'lucide-react';
 import { ThemeContext } from '../contexts/ThemeContext';
+import TermsModal from '../components/TermsModal';
 import './Landing.css';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useContext(ThemeContext);
+  const [showTerms, setShowTerms] = useState(false);
+
+  const handleGetStartedClick = () => {
+    setShowTerms(true);
+  };
+
+  const handleTermsAccept = () => {
+    setShowTerms(false);
+    navigate('/auth');
+  };
 
   return (
     <div className="landing-container">
+      {/* Terms & Community Guidelines Modal */}
+      <TermsModal
+        isOpen={showTerms}
+        onClose={() => setShowTerms(false)}
+        onAccept={handleTermsAccept}
+      />
 
       <nav className="glass-panel navbar flex-between">
         <div className="logo flex-center">
@@ -22,7 +39,9 @@ const Landing = () => {
           </button>
           <div className="nav-actions">
             <button className="btn btn-secondary" onClick={() => navigate('/auth')}>Login</button>
-            <button className="btn btn-primary" onClick={() => navigate('/auth')} style={{ marginLeft: '1rem' }}>Get Started</button>
+            <button className="btn btn-primary" onClick={handleGetStartedClick} style={{ marginLeft: '1rem' }}>
+              Get Started
+            </button>
           </div>
         </div>
       </nav>
@@ -39,7 +58,7 @@ const Landing = () => {
           </p>
           
           <div className="hero-buttons">
-            <button className="btn btn-primary btn-lg" onClick={() => navigate('/auth')}>
+            <button className="btn btn-primary btn-lg" onClick={handleGetStartedClick}>
               Join Now <Users size={20} />
             </button>
             <button className="btn btn-secondary btn-lg" onClick={() => navigate('/dashboard')}>
@@ -54,15 +73,24 @@ const Landing = () => {
               <p className="text-small">Crystal clear video rooms for group studies or late-night hangouts.</p>
             </div>
             <div className="glass-card feature-card">
-              <div className="feature-icon"><MessageSquare size={24} color="#3b82f6" /></div>
+              <div className="feature-icon"><MessageSquare size={24} color="#ea580c" /></div>
               <h3 className="heading-md">Real-time Text</h3>
               <p className="text-small">Instant messaging with emojis, file sharing, and zero latency.</p>
             </div>
             <div className="glass-card feature-card">
               <div className="feature-icon"><Shield size={24} color="#10b981" /></div>
-              <h3 className="heading-md">Safe & Secure</h3>
-              <p className="text-small">Exclusive for verified Chitkara hostel students. No outsiders.</p>
+              <h3 className="heading-md">Safe & Moderated</h3>
+              <p className="text-small">Exclusive for verified Chitkara hostel students. No abusive language tolerated.</p>
             </div>
+          </div>
+
+          <div style={{ marginTop: '3rem', textAlign: 'center' }}>
+            <button
+              onClick={() => setShowTerms(true)}
+              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.875rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+            >
+              <FileText size={14} /> Read Community Guidelines & Terms of Service
+            </button>
           </div>
         </div>
       </main>
