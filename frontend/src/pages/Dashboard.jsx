@@ -12,9 +12,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const Dashboard = () => {
   const [rooms, setRooms] = useState([]);
   const [friends, setFriends] = useState([]);
-  const [onlineCount, setOnlineCount] = useState(14);
-  const [onlineMaleCount, setOnlineMaleCount] = useState(9);
-  const [onlineFemaleCount, setOnlineFemaleCount] = useState(5);
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [onlineMaleCount, setOnlineMaleCount] = useState(0);
+  const [onlineFemaleCount, setOnlineFemaleCount] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editName, setEditName] = useState('');
@@ -69,12 +69,12 @@ const Dashboard = () => {
       try {
         const countRes = await axios.get(`${API_URL}/api/users/online-count`, { timeout: 5000 });
         if (countRes.data) {
-          setOnlineCount(countRes.data.count || 14);
-          setOnlineMaleCount(countRes.data.maleCount || 9);
-          setOnlineFemaleCount(countRes.data.femaleCount || 5);
+          setOnlineCount(countRes.data.count || 0);
+          setOnlineMaleCount(countRes.data.maleCount || 0);
+          setOnlineFemaleCount(countRes.data.femaleCount || 0);
         }
       } catch (err) {
-        console.log('Using default online count stats');
+        console.log('Online count fetch fallback');
       }
 
       // Fetch active rooms
@@ -113,6 +113,14 @@ const Dashboard = () => {
       socket.on('user-online', handleUserStatusChange);
       socket.on('user-offline', handleUserStatusChange);
 
+      socket.on('online-count-updated', (data) => {
+        if (data) {
+          setOnlineCount(data.count || 0);
+          setOnlineMaleCount(data.maleCount || 0);
+          setOnlineFemaleCount(data.femaleCount || 0);
+        }
+      });
+
       socket.on('match-found', (data) => {
         setIsSearching(false);
         navigate(`/chat/${data.roomId}`, { state: { partnerUserId: data.partnerUserId, partnerName: data.partnerName } });
@@ -127,6 +135,7 @@ const Dashboard = () => {
       return () => {
         socket.off('user-online', handleUserStatusChange);
         socket.off('user-offline', handleUserStatusChange);
+        socket.off('online-count-updated');
         socket.off('match-found');
         socket.off('room-count-updated');
       };

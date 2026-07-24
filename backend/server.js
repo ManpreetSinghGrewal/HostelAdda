@@ -36,6 +36,25 @@ app.set('io', io);
 
 let waitingUser = null; // For Omegle-style matching
 
+// Helper to broadcast real-time online count breakdown to all connected sockets
+const broadcastOnlineStats = async () => {
+  try {
+    const totalCount = await User.countDocuments({ isOnline: true });
+    const maleCount = await User.countDocuments({ isOnline: true, gender: 'Male' });
+    const femaleCount = await User.countDocuments({ isOnline: true, gender: 'Female' });
+    const othersCount = await User.countDocuments({ isOnline: true, gender: 'Others' });
+
+    io.emit('online-count-updated', {
+      count: totalCount,
+      maleCount: maleCount,
+      femaleCount: femaleCount,
+      othersCount: othersCount
+    });
+  } catch (error) {
+    console.error('Error broadcasting online stats:', error);
+  }
+};
+
 io.on('connection', async (socket) => {
   const userId = socket.handshake.query.userId;
 
@@ -43,20 +62,18 @@ io.on('connection', async (socket) => {
     console.log(`User connected: ${userId} with socket ${socket.id}`);
     await User.findByIdAndUpdate(userId, { isOnline: true });
     io.emit('user-online', userId);
+    await broadcastOnlineStats();
   }
 
   // Normal Room Join
   socket.on('join-room', (data) => {
-    // Support legacy string or new object
     const roomId = typeof data === 'string' ? data : data.roomId;
     const roomUserId = typeof data === 'string' ? null : data.userId;
     
     socket.join(roomId);
     console.log(`Socket ${socket.id} joined room ${roomId}`);
-    // Notify others in room so they can initiate WebRTC offer
     socket.to(roomId).emit('user-joined', { socketId: socket.id, userId: roomUserId });
     
-    // Broadcast updated room count to all clients
     const room = io.sockets.adapter.rooms.get(roomId);
     if (room && !roomId.startsWith('random-')) {
       io.emit('room-count-updated', { roomId, count: room.size });
@@ -70,11 +87,9 @@ io.on('connection', async (socket) => {
       
       const partnerSocket = io.sockets.sockets.get(waitingUser.socketId);
       if (partnerSocket) {
-        // Send match individually so they join via ChatRoom explicitly. 
         socket.emit('match-found', { roomId, partnerUserId: waitingUser.userId, partnerName: waitingUser.userName });
         partnerSocket.emit('match-found', { roomId, partnerUserId: userId, partnerName: userName });
       } else {
-        // Partner disconnected while waiting, put this user in queue
         waitingUser = { socketId: socket.id, userId, userName };
         return;
       }
@@ -103,7 +118,6 @@ io.on('connection', async (socket) => {
       }
     }
     
-    // Broadcast updated room count to all clients
     if (!roomId.startsWith('random-')) {
       io.emit('room-count-updated', { roomId, count: room ? room.size : 0 });
     }
@@ -112,7 +126,6 @@ io.on('connection', async (socket) => {
   socket.on('send-message', async (data) => {
     try {
       const { roomId, senderId, senderName, text, time } = data;
-      // Don't save random chat messages to DB
       if (!roomId.startsWith('random-')) {
         await Message.create({ roomId, senderId, senderName, text, time });
       }
@@ -150,18 +163,15 @@ io.on('connection', async (socket) => {
     if (waitingUser && waitingUser.socketId === socket.id) {
       waitingUser = null;
     }
-    // Tell all rooms they were in that they left
     for (const roomId of socket.rooms) {
       if (roomId !== socket.id) {
         socket.to(roomId).emit('user-left', socket.id);
         
         const room = io.sockets.adapter.rooms.get(roomId);
-        // If size is 1, this socket is the last one in the room (since it hasn't fully left yet)
         if (room && room.size === 1) {
           if (!roomId.startsWith('random-')) {
             try {
               await Message.deleteMany({ roomId });
-              console.log(`Room ${roomId} is empty (disconnecting), cleared messages.`);
             } catch (error) {
               console.error('Error clearing empty room chat on disconnect', error);
             }
@@ -180,6 +190,7 @@ io.on('connection', async (socket) => {
       console.log(`User disconnected: ${userId}`);
       await User.findByIdAndUpdate(userId, { isOnline: false });
       io.emit('user-offline', userId);
+      await broadcastOnlineStats();
     }
   });
 });
