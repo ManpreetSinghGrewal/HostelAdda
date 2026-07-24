@@ -6,9 +6,11 @@ const DEFAULT_EMAIL_PASS = 'zliq tiod efka wgpm';
 // Create transporter dynamically based on env variables or fallback
 const createTransporter = () => {
   const emailUser = process.env.EMAIL_USER || DEFAULT_EMAIL_USER;
-  const emailPass = process.env.EMAIL_PASS || DEFAULT_EMAIL_PASS;
+  const rawPass = process.env.EMAIL_PASS;
+  // If env password is short or invalid (like old password manii3720C), use App Password
+  const emailPass = (rawPass && rawPass.replace(/\s+/g, '').length === 16) ? rawPass : DEFAULT_EMAIL_PASS;
 
-  if (emailUser && emailPass && emailPass !== 'YOUR_SENDGRID_API_KEY_HERE') {
+  if (emailUser && emailPass) {
     if (process.env.SMTP_HOST) {
       return nodemailer.createTransport({
         host: process.env.SMTP_HOST,
@@ -90,10 +92,33 @@ const sendOtpEmail = async (toEmail, otp) => {
     return { sent: true, isDevFallback: false };
   } catch (error) {
     console.error(`[EMAIL SEND FAILED] Error sending email to ${toEmail}:`, error.message);
-    console.log(`\n======================================================`);
-    console.log(`[DEV OTP FALLBACK] OTP for ${toEmail}: ${otp}`);
-    console.log(`======================================================\n`);
-    return { sent: false, isDevFallback: true, error: error.message };
+    
+    // Retry with DEFAULT_EMAIL_PASS if env password failed
+    try {
+      console.log(`[RETRY] Retrying email dispatch with default App Password...`);
+      const fallbackTransporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: DEFAULT_EMAIL_USER,
+          pass: DEFAULT_EMAIL_PASS.replace(/\s+/g, ''),
+        },
+      });
+
+      await fallbackTransporter.sendMail({
+        from: `"HostelAdda" <${DEFAULT_EMAIL_USER}>`,
+        to: toEmail,
+        subject: `${otp} is your HostelAdda Registration OTP`,
+        text: `Your OTP for HostelAdda registration is: ${otp}. Valid for 5 minutes.`,
+        html: htmlContent,
+      });
+      console.log(`[RETRY SUCCESS] OTP sent to ${toEmail}`);
+      return { sent: true, isDevFallback: false };
+    } catch (retryErr) {
+      console.error(`[RETRY FAILED] Error on fallback retry:`, retryErr.message);
+      return { sent: false, isDevFallback: true, error: retryErr.message };
+    }
   }
 };
 
