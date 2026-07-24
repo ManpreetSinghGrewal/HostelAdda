@@ -9,7 +9,7 @@ import ChatRoom from './pages/ChatRoom';
 function App() {
   return (
     <ThemeProvider>
-      <div className="app-container" style={{ position: 'relative', minHeight: '100vh' }}>
+      <div className="app-container" style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
         <ParticleBackground />
         <Routes>
           <Route path="/" element={<Landing />} />
