@@ -62,6 +62,52 @@
   border-radius: 8px;
 }
 
+/* FRIENDS & REQUESTS STYLES */
+.friends-section {
+  border-radius: 18px;
+}
+
+.friends-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.friend-card {
+  border-radius: 12px;
+}
+
+.friend-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.status-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-indicator-dot.online {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+}
+
+.status-indicator-dot.offline {
+  background: #94a3b8;
+}
+
+.requests-banner {
+  border-radius: 16px;
+}
+
+.request-card {
+  border-radius: 10px;
+}
+
 .profile-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
