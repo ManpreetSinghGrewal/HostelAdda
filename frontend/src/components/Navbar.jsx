@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Home, LayoutGrid, Info, User, LogOut, LogIn, Sun, Moon, Menu, X, ShieldCheck, ChevronDown } from 'lucide-react';
+import { Home, LayoutGrid, Info, User, LogOut, LogIn, Sun, Moon, Menu, X, ChevronDown } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
 import { SocketContext } from '../contexts/SocketContext';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -17,19 +17,24 @@ const Navbar = () => {
   const { isDark, toggleTheme } = useContext(ThemeContext);
 
   const [onlineCount, setOnlineCount] = useState(0);
+  const [onlineMaleCount, setOnlineMaleCount] = useState(0);
+  const [onlineFemaleCount, setOnlineFemaleCount] = useState(0);
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
-  // Fetch online count
+  // Fetch real-time online count breakdown
   useEffect(() => {
     const fetchOnlineCount = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/users/online-count`, { timeout: 4000 });
         if (res.data && res.data.count !== undefined) {
-          setOnlineCount(res.data.count);
+          setOnlineCount(res.data.count || 0);
+          setOnlineMaleCount(res.data.maleCount || 0);
+          setOnlineFemaleCount(res.data.femaleCount || 0);
         }
       } catch (err) {
-        // Silent fallback
+        // Fallback
       }
     };
 
@@ -38,7 +43,9 @@ const Navbar = () => {
     if (socket) {
       socket.on('online-count-updated', (data) => {
         if (data && data.count !== undefined) {
-          setOnlineCount(data.count);
+          setOnlineCount(data.count || 0);
+          setOnlineMaleCount(data.maleCount || 0);
+          setOnlineFemaleCount(data.femaleCount || 0);
         }
       });
       return () => socket.off('online-count-updated');
@@ -57,10 +64,10 @@ const Navbar = () => {
           <span className="navbar-badge">CHITKARA</span>
         </div>
 
-        {/* Live Online Badge */}
+        {/* Real-Time Live Male/Female Breakdown Badge */}
         <div className="navbar-online-pill">
           <span className="online-pulse-dot" />
-          <span>{onlineCount > 0 ? `${onlineCount} Live` : 'Live Portal'}</span>
+          <span>{onlineCount} Online (👨 {onlineMaleCount} 👩 {onlineFemaleCount})</span>
         </div>
 
         {/* Desktop Navigation Links */}
