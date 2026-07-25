@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Video, Hash, Shuffle, Users, ShieldCheck, Edit2, X, LogIn, MessageCircle } from 'lucide-react';
+import { Video, Hash, Shuffle, Users, ShieldCheck, Edit2, X, LogIn, MessageCircle, Loader2 } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
 import { SocketContext } from '../contexts/SocketContext';
 import Navbar from '../components/Navbar';
@@ -9,45 +9,9 @@ import './Dashboard.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
-// Consistent Chitkara Hostel Rooms
-const defaultRooms = [
-  {
-    _id: 'default-1',
-    roomId: 'franklin-lounge',
-    name: 'Franklin Block Lounge',
-    description: 'Franklin Hostel A & B student hub. Casual hangout and tech discussions.',
-    activeUsers: 0,
-    category: 'hostel'
-  },
-  {
-    _id: 'default-2',
-    roomId: 'ngh-girls-hub',
-    name: 'NGH Girls Hub',
-    description: 'Exclusive lounge for NGH Hostel A & B students. Peer chat & study.',
-    activeUsers: 0,
-    category: 'hostel'
-  },
-  {
-    _id: 'default-3',
-    roomId: 'gaming-esports',
-    name: 'Gaming & Esports Lounge',
-    description: 'Valorant, BGMI, GTA, and multiplayer gaming matchmaking for Chitkara hostels.',
-    activeUsers: 0,
-    category: 'gaming'
-  },
-  {
-    _id: 'default-4',
-    roomId: 'late-night-study',
-    name: 'Late Night Study & Code',
-    description: 'Quiet study, exam revision, assignment collaboration, and coding help.',
-    activeUsers: 0,
-    category: 'study'
-  }
-];
-
 const Dashboard = () => {
-  // Initialize with defaultRooms directly so there is ZERO millisecond layout flash on page refresh
-  const [rooms, setRooms] = useState(defaultRooms);
+  const [rooms, setRooms] = useState([]);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editName, setEditName] = useState('');
@@ -60,12 +24,14 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const roomsRes = await axios.get(`${API_URL}/api/rooms`, { timeout: 4000 });
-      if (roomsRes.data && roomsRes.data.length > 0) {
+      const roomsRes = await axios.get(`${API_URL}/api/rooms`, { timeout: 6000 });
+      if (roomsRes.data) {
         setRooms(roomsRes.data);
       }
     } catch (err) {
-      // Keep initial defaultRooms seamlessly
+      console.log('Error fetching rooms from server:', err);
+    } finally {
+      setIsLoadingRooms(false);
     }
   };
 
@@ -223,32 +189,40 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="rooms-grid">
-          {rooms.map(room => (
-            <div key={room._id || room.roomId} className="glass-card room-card">
-              <div className="room-card-header flex-between">
-                <div className="room-icon flex-center">
-                  <Hash size={24} color="#ea580c" />
+        {/* Rooms Grid */}
+        {isLoadingRooms ? (
+          <div className="text-center py-5 glass-card" style={{ padding: '3rem 1rem' }}>
+            <Loader2 size={32} color="#ea580c" className="animate-spin mb-3" style={{ animation: 'spin 1s linear infinite' }} />
+            <p className="text-body" style={{ color: 'var(--text-secondary)' }}>Loading rooms...</p>
+          </div>
+        ) : (
+          <div className="rooms-grid">
+            {rooms.map(room => (
+              <div key={room._id || room.roomId} className="glass-card room-card">
+                <div className="room-card-header flex-between">
+                  <div className="room-icon flex-center">
+                    <Hash size={24} color="#ea580c" />
+                  </div>
+                  <span className="badge badge-dark">{room.activeUsers || 0} active users</span>
                 </div>
-                <span className="badge badge-dark">{room.activeUsers || 0} active users</span>
+                <h3 className="heading-md room-title">{room.name}</h3>
+                <div className="room-types">
+                  <span className="type-indicator"><MessageCircle size={14} /> Real-time Chat</span>
+                  <span className="type-indicator" style={{ marginLeft: '1rem' }}><Video size={14} /> Video Enabled</span>
+                </div>
+                <p className="text-small text-muted mt-4 mb-4">
+                  {room.description || `Join this room to discuss with peers.`}
+                </p>
+                <button 
+                  className="btn btn-primary w-100 mt-auto"
+                  onClick={() => handleEnterRoom(room.roomId)}
+                >
+                  Enter Room
+                </button>
               </div>
-              <h3 className="heading-md room-title">{room.name}</h3>
-              <div className="room-types">
-                <span className="type-indicator"><MessageCircle size={14} /> Real-time Chat</span>
-                <span className="type-indicator" style={{ marginLeft: '1rem' }}><Video size={14} /> Video Enabled</span>
-              </div>
-              <p className="text-small text-muted mt-4 mb-4">
-                {room.description || `Join this room to discuss with peers.`}
-              </p>
-              <button 
-                className="btn btn-primary w-100 mt-auto"
-                onClick={() => handleEnterRoom(room.roomId)}
-              >
-                Enter Room
-              </button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <div className="safety-banner flex-between mt-8">
           <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '1rem' }}>
