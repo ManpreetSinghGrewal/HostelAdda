@@ -9,8 +9,14 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState(() => {
-    const userInfo = localStorage.getItem('userInfo');
-    return userInfo ? JSON.parse(userInfo) : null;
+    try {
+      const userInfo = localStorage.getItem('userInfo');
+      return userInfo ? JSON.parse(userInfo) : null;
+    } catch (error) {
+      console.error('Error parsing stored user session:', error);
+      localStorage.removeItem('userInfo');
+      return null;
+    }
   });
 
   const googleAuth = async (credential, gender, hostelBlock) => {

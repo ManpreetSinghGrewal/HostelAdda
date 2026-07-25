@@ -194,9 +194,11 @@ const Dashboard = () => {
     }
   };
 
-  const displayRooms = (rooms.length > 0 ? rooms : defaultRooms).filter(room => {
-    const matchesSearch = room.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (room.description && room.description.toLowerCase().includes(searchQuery.toLowerCase()));
+  const safeRooms = Array.isArray(rooms) && rooms.length > 0 ? rooms : defaultRooms;
+  const displayRooms = safeRooms.filter(room => {
+    if (!room || !room.name) return false;
+    const matchesSearch = room.name.toLowerCase().includes((searchQuery || '').toLowerCase()) || 
+                          (room.description && room.description.toLowerCase().includes((searchQuery || '').toLowerCase()));
     
     if (activeCategory === 'all') return matchesSearch;
     return matchesSearch && (room.category === activeCategory);
