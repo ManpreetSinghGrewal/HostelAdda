@@ -233,7 +233,7 @@ const Dashboard = () => {
 
             {user ? (
               <button className="btn btn-primary" onClick={() => navigate('/profile')}>
-                <User size={16} /> {user.name}
+                <User size={16} /> {user?.name || 'Profile'}
               </button>
             ) : (
               <button className="btn btn-primary" onClick={() => navigate('/auth')}>
@@ -339,10 +339,10 @@ const Dashboard = () => {
         <header className="dashboard-header flex-between">
           <div>
             <h2 className="heading-lg">
-              {user ? `Welcome back, ${user.name}` : 'Chitkara Hostel Rooms'}
+              {user ? `Welcome back, ${user?.name || 'Student'}` : 'Chitkara Hostel Rooms'}
             </h2>
             <p className="text-body">
-              {user ? `Connected to ${user.hostelBlock || 'Hostel'} Community` : 'Explore rooms or sign in for 1-click peer matching.'}
+              {user ? `Connected to ${user?.hostelBlock || 'Hostel'} Community` : 'Explore rooms or sign in for 1-click peer matching.'}
             </p>
           </div>
           {!user && (
