@@ -38,7 +38,7 @@ const googleLogin = async (req, res) => {
 
     if (!email || !email.endsWith('@chitkara.edu.in')) {
       return res.status(400).json({
-        message: 'Access Denied: Only official @chitkara.edu.in Google accounts are allowed.'
+        message: 'Access Denied: Only @chitkara.edu.in Google accounts are allowed.'
       });
     }
 

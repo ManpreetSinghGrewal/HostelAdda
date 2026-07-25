@@ -193,7 +193,7 @@ const Dashboard = () => {
               {user ? `Welcome back, ${user.name}` : 'Chitkara Hostel Rooms'}
             </h2>
             <p className="text-body">
-              {user ? `Connected to ${user.hostelBlock || 'Hostel'} Community` : 'Explore rooms or sign in for 1-click peer matching.'}
+              Explore rooms or connect with hostel peers.
             </p>
           </div>
           {!user && (

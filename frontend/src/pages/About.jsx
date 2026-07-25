@@ -26,7 +26,7 @@ const About = () => {
     },
     {
       q: 'Which hostel blocks are supported?',
-      a: 'All official Chitkara University hostels including Franklin, Archimedes, Armstrong, Magellan, NGH, Vasco, Columbus, IBN, and Pie.'
+      a: 'All Chitkara University hostels including Franklin, Archimedes, Armstrong, Magellan, NGH, Vasco, Columbus, IBN, and Pie.'
     }
   ];
 
@@ -38,7 +38,7 @@ const About = () => {
         {/* About Hero Section */}
         <section className="about-hero text-center">
           <div className="about-badge mb-3">
-            <Sparkles size={16} /> Official Student Ecosystem
+            <Sparkles size={16} /> Student Ecosystem
           </div>
           <h1 className="heading-xl mb-3">
             Connecting Chitkara's <br />

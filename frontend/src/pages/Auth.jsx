@@ -112,7 +112,7 @@ const Auth = () => {
           <p className="text-body">
             {googleSetupState
               ? 'Select your Gender & Hostel Block to complete setup'
-              : 'Official Chitkara University Student Portal'}
+              : 'Chitkara University Student Portal'}
           </p>
         </div>
 
@@ -210,7 +210,7 @@ const Auth = () => {
             </div>
 
             <div style={{ fontSize: '0.8rem', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'center', justifyContent: 'center' }}>
-              <ShieldCheck size={16} /> Official @chitkara.edu.in accounts only
+              <ShieldCheck size={16} /> @chitkara.edu.in accounts only
             </div>
 
             <div style={{ marginTop: '1.25rem', padding: '0.85rem', background: 'rgba(99, 102, 241, 0.06)', borderRadius: '10px', fontSize: '0.8rem', color: 'var(--text-secondary, #94a3b8)', lineHeight: '1.4' }}>

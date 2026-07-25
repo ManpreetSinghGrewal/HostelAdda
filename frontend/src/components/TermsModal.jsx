@@ -28,7 +28,7 @@ const TermsModal = ({ isOpen, onClose, onAccept }) => {
             Community Guidelines & Terms
           </h2>
           <p className="text-small" style={{ color: 'var(--text-secondary)' }}>
-            Official Code of Conduct for Chitkara University HostelAdda
+            Code of Conduct for Chitkara University HostelAdda
           </p>
         </div>
 
@@ -50,7 +50,7 @@ const TermsModal = ({ isOpen, onClose, onAccept }) => {
               <CheckCircle size={20} />
             </div>
             <div>
-              <h4 className="rule-title">2. Official Chitkara Account Only</h4>
+              <h4 className="rule-title">2. Chitkara Account Only</h4>
               <p className="rule-desc">
                 Only verified students with valid <code>@chitkara.edu.in</code> Google Workspace accounts are permitted. Do not attempt to share or fake identity details.
               </p>
