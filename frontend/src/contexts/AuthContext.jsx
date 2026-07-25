@@ -2,7 +2,17 @@ import React, { createContext, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const getApiUrl = () => {
+  if (import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('localhost')) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    return 'https://chitmeet.onrender.com';
+  }
+  return import.meta.env.VITE_API_URL || 'http://localhost:5001';
+};
+
+const API_URL = getApiUrl();
 
 export const AuthContext = createContext();
 
@@ -20,20 +30,12 @@ export const AuthProvider = ({ children }) => {
   });
 
   const googleAuth = async (credential, gender, hostelBlock) => {
-    // Check if live site (HTTPS) is trying to call unconfigured localhost backend
-    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_URL.includes('localhost')) {
-      return {
-        success: false,
-        message: 'Live site cannot connect to localhost. Please add VITE_API_URL in Vercel Environment Variables.'
-      };
-    }
-
     try {
       const { data } = await axios.post(`${API_URL}/api/auth/google`, {
         credential,
         gender,
         hostelBlock
-      }, { timeout: 15000 });
+      }, { timeout: 25000 });
 
       if (data.requiresProfileDetails) {
         return {
@@ -51,29 +53,28 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-        return { success: false, message: 'Server connection timed out. Please check backend connection.' };
+        return { success: false, message: 'Server is waking up (Render cold-start). Please try clicking Sign In again in 5 seconds.' };
       }
       return {
         success: false,
-        message: error.response?.data?.message || 'Google Sign-In failed'
+        message: error.response?.data?.message || 'Google Sign-In failed. Please ensure you are using an official @chitkara.edu.in account.'
       };
     }
   };
 
   const updateProfile = async (profileData) => {
     try {
-      // Support legacy two args or new profile object
       const payload = typeof profileData === 'object' 
         ? profileData 
         : { name: arguments[0], hostelBlock: arguments[1] };
 
-      const { data } = await axios.put(`${API_URL}/api/users/${user._id}/profile`, payload);
+      const { data } = await axios.put(`${API_URL}/api/users/${user._id}/profile`, payload, { timeout: 15000 });
       const updatedUser = { 
         ...user, 
-        name: data.name || user.name, 
-        hostelBlock: data.hostelBlock || user.hostelBlock,
-        avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : user.avatarUrl,
-        bio: data.bio !== undefined ? data.bio : user.bio
+        name: data.name || user?.name, 
+        hostelBlock: data.hostelBlock || user?.hostelBlock,
+        avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : user?.avatarUrl,
+        bio: data.bio !== undefined ? data.bio : user?.bio
       };
       setUser(updatedUser);
       localStorage.setItem('userInfo', JSON.stringify(updatedUser));
