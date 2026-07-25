@@ -62,6 +62,18 @@ const Dashboard = () => {
     }
   ];
 
+  const navigate = useNavigate();
+  const authContext = useContext(AuthContext) || {};
+  const user = authContext.user || null;
+  const logout = authContext.logout || (() => {});
+  const updateProfile = authContext.updateProfile || (() => {});
+
+  const socket = useContext(SocketContext);
+
+  const themeContext = useContext(ThemeContext) || { isDark: true, toggleTheme: () => {} };
+  const isDark = themeContext.isDark;
+  const toggleTheme = themeContext.toggleTheme;
+
   const [rooms, setRooms] = useState(defaultRooms);
   const [friends, setFriends] = useState([]);
   const [onlineCount, setOnlineCount] = useState(0);

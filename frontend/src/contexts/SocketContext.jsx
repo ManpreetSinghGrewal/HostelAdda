@@ -6,7 +6,8 @@ export const SocketContext = createContext();
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
-  const { user } = useContext(AuthContext);
+  const authContext = useContext(AuthContext) || { user: null };
+  const user = authContext.user;
 
   useEffect(() => {
     try {
