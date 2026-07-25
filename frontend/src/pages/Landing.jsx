@@ -44,8 +44,8 @@ const Landing = () => {
 
         <nav className="nav-links">
           <button className="nav-link-btn" onClick={() => navigate('/')}>Home</button>
-          <button className="nav-link-btn" onClick={() => navigate('/about')}>About Us</button>
-          <button className="nav-link-btn" onClick={() => navigate(user ? '/profile' : '/auth')}>Profile</button>
+          <button className="nav-link-btn" onClick={() => setShowTerms(true)}>About Us</button>
+          <button className="nav-link-btn" onClick={() => navigate(user ? '/dashboard' : '/auth')}>Profile</button>
         </nav>
 
         <div className="nav-actions flex-center">
@@ -54,7 +54,7 @@ const Landing = () => {
           </button>
           
           {user ? (
-            <button className="btn btn-primary nav-btn-compact flex-center" onClick={() => navigate('/profile')} style={{ gap: '0.4rem' }}>
+            <button className="btn btn-primary nav-btn-compact flex-center" onClick={() => navigate('/dashboard')} style={{ gap: '0.4rem' }}>
               <User size={15} /> {user.name}
             </button>
           ) : (

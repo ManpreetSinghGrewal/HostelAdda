@@ -7,19 +7,30 @@ import { SocketContext } from '../contexts/SocketContext';
 import { ThemeContext } from '../contexts/ThemeContext';
 import './Dashboard.css';
 
-const getApiUrl = () => {
-  if (import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('localhost')) {
-    return import.meta.env.VITE_API_URL;
-  }
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-    return 'https://chitmeet.onrender.com';
-  }
-  return import.meta.env.VITE_API_URL || 'http://localhost:5001';
-};
-
-const API_URL = getApiUrl();
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const Dashboard = () => {
+  const [rooms, setRooms] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [onlineMaleCount, setOnlineMaleCount] = useState(0);
+  const [onlineFemaleCount, setOnlineFemaleCount] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editHostel, setEditHostel] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // New Search & Category Filtering State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all');
+  
+  const navigate = useNavigate();
+  const { user, logout, updateProfile } = useContext(AuthContext);
+  const socket = useContext(SocketContext);
+  const { isDark, toggleTheme } = useContext(ThemeContext);
+
   // Default Chitkara Hostel Rooms
   const defaultRooms = [
     {
@@ -71,34 +82,6 @@ const Dashboard = () => {
       category: 'study'
     }
   ];
-
-  const navigate = useNavigate();
-  const authContext = useContext(AuthContext) || {};
-  const user = authContext.user || null;
-  const logout = authContext.logout || (() => {});
-  const updateProfile = authContext.updateProfile || (() => {});
-
-  const socket = useContext(SocketContext);
-
-  const themeContext = useContext(ThemeContext) || { isDark: true, toggleTheme: () => {} };
-  const isDark = themeContext.isDark;
-  const toggleTheme = themeContext.toggleTheme;
-
-  const [rooms, setRooms] = useState(defaultRooms);
-  const [friends, setFriends] = useState([]);
-  const [onlineCount, setOnlineCount] = useState(0);
-  const [onlineMaleCount, setOnlineMaleCount] = useState(0);
-  const [onlineFemaleCount, setOnlineFemaleCount] = useState(0);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editHostel, setEditHostel] = useState('');
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Search & Category Filtering State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
 
   const fetchData = async () => {
     try {
@@ -216,11 +199,9 @@ const Dashboard = () => {
     }
   };
 
-  const safeRooms = Array.isArray(rooms) && rooms.length > 0 ? rooms : defaultRooms;
-  const displayRooms = safeRooms.filter(room => {
-    if (!room || !room.name) return false;
-    const matchesSearch = room.name.toLowerCase().includes((searchQuery || '').toLowerCase()) || 
-                          (room.description && room.description.toLowerCase().includes((searchQuery || '').toLowerCase()));
+  const displayRooms = (rooms.length > 0 ? rooms : defaultRooms).filter(room => {
+    const matchesSearch = room.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (room.description && room.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
     if (activeCategory === 'all') return matchesSearch;
     return matchesSearch && (room.category === activeCategory);
@@ -249,13 +230,13 @@ const Dashboard = () => {
               <Home size={16} /> Home
             </button>
 
-            <button className="btn btn-secondary" onClick={() => navigate('/about')}>
+            <button className="btn btn-secondary" onClick={() => navigate('/')}>
               <FileText size={16} /> About Us
             </button>
 
             {user ? (
-              <button className="btn btn-primary" onClick={() => navigate('/profile')}>
-                <User size={16} /> {user?.name || 'Profile'}
+              <button className="btn btn-primary" onClick={openEditProfile}>
+                <User size={16} /> {user.name}
               </button>
             ) : (
               <button className="btn btn-primary" onClick={() => navigate('/auth')}>
@@ -361,10 +342,10 @@ const Dashboard = () => {
         <header className="dashboard-header flex-between">
           <div>
             <h2 className="heading-lg">
-              {user ? `Welcome back, ${user?.name || 'Student'}` : 'Chitkara Hostel Rooms'}
+              {user ? `Welcome back, ${user.name}` : 'Chitkara Hostel Rooms'}
             </h2>
             <p className="text-body">
-              {user ? `Connected to ${user?.hostelBlock || 'Hostel'} Community` : 'Explore rooms or sign in for 1-click peer matching.'}
+              {user ? `Connected to ${user.hostelBlock || 'Hostel'} Community` : 'Explore rooms or sign in for 1-click peer matching.'}
             </p>
           </div>
           {!user && (

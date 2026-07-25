@@ -5,8 +5,6 @@ import Landing from './pages/Landing';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import ChatRoom from './pages/ChatRoom';
-import About from './pages/About';
-import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -17,8 +15,6 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/profile" element={<Profile />} />
           <Route path="/chat/:roomId" element={<ChatRoom />} />
         </Routes>
       </div>

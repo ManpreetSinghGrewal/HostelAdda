@@ -4,8 +4,7 @@ import './ParticleBackground.css';
 
 const ParticleBackground = () => {
   const canvasRef = useRef(null);
-  const themeContext = useContext(ThemeContext) || { isDark: true };
-  const isDark = themeContext.isDark;
+  const { isDark } = useContext(ThemeContext);
 
   useEffect(() => {
     const canvas = canvasRef.current;

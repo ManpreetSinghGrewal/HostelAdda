@@ -7,17 +7,7 @@ import { SocketContext } from '../contexts/SocketContext';
 import { ThemeContext } from '../contexts/ThemeContext';
 import './ChatRoom.css';
 
-const getApiUrl = () => {
-  if (import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('localhost')) {
-    return import.meta.env.VITE_API_URL;
-  }
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-    return 'https://chitmeet.onrender.com';
-  }
-  return import.meta.env.VITE_API_URL || 'http://localhost:5001';
-};
-
-const API_URL = getApiUrl();
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const ChatRoom = () => {
   const { roomId } = useParams();

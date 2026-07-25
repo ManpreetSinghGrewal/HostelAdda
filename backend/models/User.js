@@ -7,8 +7,6 @@ const userSchema = new mongoose.Schema({
   gender: { type: String, enum: ['Male', 'Female', 'Others'], required: true },
   password: { type: String, required: true },
   hostelBlock: { type: String, required: true },
-  avatarUrl: { type: String, default: '' },
-  bio: { type: String, default: 'Chitkara Student' },
   isOnline: { type: Boolean, default: false },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]

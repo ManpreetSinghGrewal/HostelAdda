@@ -164,9 +164,6 @@
 }
 
 .dashboard-main {
-  position: relative;
-  z-index: 5;
-  color: var(--text-primary);
   flex: 1;
   display: flex;
   flex-direction: column;
