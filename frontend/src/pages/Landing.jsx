@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Video, Users, Shield, FileText } from 'lucide-react';
+import { MessageSquare, Video, Users, Shield, FileText, ArrowRight, LayoutGrid } from 'lucide-react';
+import { AuthContext } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import TermsModal from '../components/TermsModal';
 import './Landing.css';
 
 const Landing = () => {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [showTerms, setShowTerms] = useState(false);
 
   const handleGetStartedClick = () => {
-    setShowTerms(true);
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      setShowTerms(true);
+    }
   };
 
   const handleTermsAccept = () => {
@@ -43,7 +49,11 @@ const Landing = () => {
           
           <div className="hero-buttons">
             <button className="btn btn-primary btn-lg" onClick={handleGetStartedClick}>
-              Join Now <Users size={20} />
+              {user ? (
+                <>Enter Dashboard <LayoutGrid size={20} /></>
+              ) : (
+                <>Join Now <Users size={20} /></>
+              )}
             </button>
             <button className="btn btn-secondary btn-lg" onClick={() => navigate('/dashboard')}>
               Explore Rooms

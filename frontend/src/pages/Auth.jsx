@@ -1,5 +1,6 @@
 // Chitmeet Authentication Component - Pure Google SSO with Community Guidelines
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Building, Sun, Moon, ShieldCheck, CheckCircle2, FileText } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { AuthContext } from '../contexts/AuthContext';
@@ -8,6 +9,17 @@ import TermsModal from '../components/TermsModal';
 import './Auth.css';
 
 const Auth = () => {
+  const navigate = useNavigate();
+  const { user, googleAuth } = useContext(AuthContext);
+  const { isDark, toggleTheme } = useContext(ThemeContext);
+
+  // If already logged in, redirect straight to dashboard
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
   // Google New User Setup State
   const [googleSetupState, setGoogleSetupState] = useState(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -17,9 +29,6 @@ const Auth = () => {
 
   const maleHostels = ['FRANKLIN-A', 'FRANKLIN-B', 'ARCHIMEDIES-A', 'ARCHIMEDIES-B', 'ARMSTRONG', 'MAGELLAN', 'MARCOPOLO'];
   const femaleHostels = ['NGH-A', 'NGH-B', 'VASCO', 'COLUMBUS', 'IBN-A', 'IBN-B', 'IBN-C', 'PIE-A', 'PIE-B', 'PIE-C'];
-
-  const { googleAuth } = useContext(AuthContext);
-  const { isDark, toggleTheme } = useContext(ThemeContext);
 
   // Handle 1-Click Google OAuth Success
   const handleGoogleSuccess = async (credentialResponse) => {
