@@ -1,0 +1,127 @@
+.profile-page-container {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+}
+
+.profile-main-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 5rem 1.5rem;
+}
+
+.profile-id-card {
+  padding: 2.25rem;
+  border-radius: 20px;
+}
+
+.profile-photo-lg {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ea580c;
+  box-shadow: 0 0 15px rgba(234, 88, 12, 0.3);
+}
+
+.profile-avatar-large {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(234, 88, 12, 0.15);
+  color: #ea580c;
+  font-size: 2rem;
+  font-weight: 700;
+  border: 2px solid #ea580c;
+}
+
+.profile-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 0.775rem;
+  font-weight: 600;
+}
+
+.profile-hostel-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #ea580c;
+  font-weight: 600;
+  background: rgba(234, 88, 12, 0.08);
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.75rem;
+}
+
+.profile-info-box {
+  padding: 2rem;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.info-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.security-item {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.profile-action-buttons {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}

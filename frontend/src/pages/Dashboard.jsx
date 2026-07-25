@@ -1,31 +1,25 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Video, MessageSquare, LogOut, Hash, Shuffle, Home, Users, MicOff, Gamepad2, BookOpen, ShieldCheck, Edit2, X, MoreVertical, Sun, Moon, LogIn, Sparkles, MessageCircle } from 'lucide-react';
+import { Video, Hash, Shuffle, Users, Gamepad2, BookOpen, ShieldCheck, Edit2, X, LogIn, MessageCircle } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
 import { SocketContext } from '../contexts/SocketContext';
-import { ThemeContext } from '../contexts/ThemeContext';
+import Navbar from '../components/Navbar';
 import './Dashboard.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const Dashboard = () => {
   const [rooms, setRooms] = useState([]);
-  const [friends, setFriends] = useState([]);
-  const [onlineCount, setOnlineCount] = useState(0);
-  const [onlineMaleCount, setOnlineMaleCount] = useState(0);
-  const [onlineFemaleCount, setOnlineFemaleCount] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editName, setEditName] = useState('');
   const [editHostel, setEditHostel] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const navigate = useNavigate();
-  const { user, logout, updateProfile } = useContext(AuthContext);
+  const { user, updateProfile } = useContext(AuthContext);
   const socket = useContext(SocketContext);
-  const { isDark, toggleTheme } = useContext(ThemeContext);
 
   // Default Chitkara Hostel Rooms
   const defaultRooms = [
@@ -65,18 +59,6 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch online count
-      try {
-        const countRes = await axios.get(`${API_URL}/api/users/online-count`, { timeout: 5000 });
-        if (countRes.data) {
-          setOnlineCount(countRes.data.count || 0);
-          setOnlineMaleCount(countRes.data.maleCount || 0);
-          setOnlineFemaleCount(countRes.data.femaleCount || 0);
-        }
-      } catch (err) {
-        console.log('Online count fetch fallback');
-      }
-
       // Fetch active rooms
       try {
         const roomsRes = await axios.get(`${API_URL}/api/rooms`, { timeout: 5000 });
@@ -87,16 +69,6 @@ const Dashboard = () => {
         }
       } catch (err) {
         setRooms(defaultRooms);
-      }
-
-      // Fetch friends if user logged in
-      if (user && user._id) {
-        try {
-          const friendsRes = await axios.get(`${API_URL}/api/users/${user._id}/friends`, { timeout: 5000 });
-          setFriends(friendsRes.data?.friends || []);
-        } catch (err) {
-          console.log('Error fetching friends list');
-        }
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -113,14 +85,6 @@ const Dashboard = () => {
       socket.on('user-online', handleUserStatusChange);
       socket.on('user-offline', handleUserStatusChange);
 
-      socket.on('online-count-updated', (data) => {
-        if (data) {
-          setOnlineCount(data.count || 0);
-          setOnlineMaleCount(data.maleCount || 0);
-          setOnlineFemaleCount(data.femaleCount || 0);
-        }
-      });
-
       socket.on('match-found', (data) => {
         setIsSearching(false);
         navigate(`/chat/${data.roomId}`, { state: { partnerUserId: data.partnerUserId, partnerName: data.partnerName } });
@@ -135,7 +99,6 @@ const Dashboard = () => {
       return () => {
         socket.off('user-online', handleUserStatusChange);
         socket.off('user-offline', handleUserStatusChange);
-        socket.off('online-count-updated');
         socket.off('match-found');
         socket.off('room-count-updated');
       };
@@ -183,91 +146,8 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Top Navbar */}
-      <header className="top-navbar glass-panel">
-        <div className="navbar-left flex-center" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-          <div className="flex-center" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
-            <img src="/favicon.svg.jpeg" alt="HostelAdda Logo" style={{ width: '26px', height: '26px', objectFit: 'cover', borderRadius: '4px' }} />
-            <span className="heading-md" style={{ marginLeft: '0.5rem' }}>HostelAdda</span>
-          </div>
-          <div className="online-badge">
-            <div className="online-indicator-dot"></div>
-            {onlineCount} Online (👨 {onlineMaleCount} 👩 {onlineFemaleCount})
-          </div>
-        </div>
-        
-        <div className="navbar-right flex-center">
-          <div className="desktop-nav" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <button className="btn btn-secondary" onClick={() => navigate('/')}>
-              <Home size={18} /> Home
-            </button>
-
-            {user ? (
-              <button className="btn btn-secondary" onClick={openEditProfile}>
-                <Edit2 size={16} /> {user.name} ({user.hostelBlock || 'Hostel'})
-              </button>
-            ) : (
-              <button className="btn btn-primary" onClick={() => navigate('/auth')}>
-                <LogIn size={16} /> Sign In
-              </button>
-            )}
-
-            <button className="icon-btn theme-toggle" onClick={toggleTheme} title={isDark ? 'Light mode' : 'Dark mode'}>
-              {isDark ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-          </div>
-          
-          <button className="icon-btn mobile-menu-toggle" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-            <MoreVertical size={24} color="var(--text-primary)" />
-          </button>
-        </div>
-      </header>
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="mobile-menu-overlay" onClick={() => setIsMobileMenuOpen(false)}>
-          <div className="mobile-menu-dropdown glass-card" onClick={e => e.stopPropagation()}>
-            <div className="flex-between mb-4">
-              <h3 className="heading-md" style={{ margin: 0 }}>Menu</h3>
-              <button className="icon-btn" onClick={() => setIsMobileMenuOpen(false)}>
-                <X size={20} />
-              </button>
-            </div>
-            
-            {user ? (
-              <div className="profile-section mb-4">
-                <div className="flex-between">
-                  <div>
-                    <p className="text-body" style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{user.name}</p>
-                    <p className="text-small text-muted">{user.hostelBlock}</p>
-                  </div>
-                  <button className="icon-btn" onClick={() => { setIsMobileMenuOpen(false); openEditProfile(); }} title="Edit Profile">
-                    <Edit2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="mb-4">
-                <button className="btn btn-primary w-100" onClick={() => navigate('/auth')}>
-                  <LogIn size={18} /> Sign In with Google
-                </button>
-              </div>
-            )}
-
-            <div className="menu-actions mt-auto">
-              {user ? (
-                <button className="btn btn-secondary logout-btn w-100" onClick={logout}>
-                  <LogOut size={18} /> Logout
-                </button>
-              ) : (
-                <button className="btn btn-secondary w-100" onClick={() => navigate('/')}>
-                  <Home size={18} /> Home Page
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Unified Global Navbar */}
+      <Navbar />
 
       <main className="dashboard-main">
         {/* Edit Profile Modal */}

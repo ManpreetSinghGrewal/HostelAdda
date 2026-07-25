@@ -1,13 +1,12 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Video, Users, Shield, Sun, Moon, FileText } from 'lucide-react';
-import { ThemeContext } from '../contexts/ThemeContext';
+import { MessageSquare, Video, Users, Shield, FileText } from 'lucide-react';
+import Navbar from '../components/Navbar';
 import TermsModal from '../components/TermsModal';
 import './Landing.css';
 
 const Landing = () => {
   const navigate = useNavigate();
-  const { isDark, toggleTheme } = useContext(ThemeContext);
   const [showTerms, setShowTerms] = useState(false);
 
   const handleGetStartedClick = () => {
@@ -28,23 +27,8 @@ const Landing = () => {
         onAccept={handleTermsAccept}
       />
 
-      <nav className="glass-panel navbar flex-between">
-        <div className="logo flex-center">
-          <img src="/favicon.svg.jpeg" alt="HostelAdda Logo" style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '4px' }} />
-          <span className="heading-md" style={{ marginLeft: '0.5rem' }}>HostelAdda</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginLeft: 'auto' }}>
-          <button className="icon-btn theme-toggle" onClick={toggleTheme} title={isDark ? 'Light mode' : 'Dark mode'}>
-            {isDark ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
-          <div className="nav-actions">
-            <button className="btn btn-secondary" onClick={() => navigate('/auth')}>Login</button>
-            <button className="btn btn-primary" onClick={handleGetStartedClick} style={{ marginLeft: '1rem' }}>
-              Get Started
-            </button>
-          </div>
-        </div>
-      </nav>
+      {/* Unified Global Navbar */}
+      <Navbar />
 
       <main className="hero-section flex-center">
         <div className="hero-content">
