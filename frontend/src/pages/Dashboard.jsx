@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Video, Hash, Shuffle, Users, Gamepad2, BookOpen, ShieldCheck, Edit2, X, LogIn, MessageCircle } from 'lucide-react';
+import { Video, Hash, Shuffle, Users, ShieldCheck, Edit2, X, LogIn, MessageCircle } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
 import { SocketContext } from '../contexts/SocketContext';
 import Navbar from '../components/Navbar';
@@ -9,8 +9,45 @@ import './Dashboard.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
+// Consistent Chitkara Hostel Rooms
+const defaultRooms = [
+  {
+    _id: 'default-1',
+    roomId: 'franklin-lounge',
+    name: 'Franklin Block Lounge',
+    description: 'Franklin Hostel A & B student hub. Casual hangout and tech discussions.',
+    activeUsers: 0,
+    category: 'hostel'
+  },
+  {
+    _id: 'default-2',
+    roomId: 'ngh-girls-hub',
+    name: 'NGH Girls Hub',
+    description: 'Exclusive lounge for NGH Hostel A & B students. Peer chat & study.',
+    activeUsers: 0,
+    category: 'hostel'
+  },
+  {
+    _id: 'default-3',
+    roomId: 'gaming-esports',
+    name: 'Gaming & Esports Lounge',
+    description: 'Valorant, BGMI, GTA, and multiplayer gaming matchmaking for Chitkara hostels.',
+    activeUsers: 0,
+    category: 'gaming'
+  },
+  {
+    _id: 'default-4',
+    roomId: 'late-night-study',
+    name: 'Late Night Study & Code',
+    description: 'Quiet study, exam revision, assignment collaboration, and coding help.',
+    activeUsers: 0,
+    category: 'study'
+  }
+];
+
 const Dashboard = () => {
-  const [rooms, setRooms] = useState([]);
+  // Initialize with defaultRooms directly so there is ZERO millisecond layout flash on page refresh
+  const [rooms, setRooms] = useState(defaultRooms);
   const [isSearching, setIsSearching] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editName, setEditName] = useState('');
@@ -21,57 +58,14 @@ const Dashboard = () => {
   const { user, updateProfile } = useContext(AuthContext);
   const socket = useContext(SocketContext);
 
-  // Default Chitkara Hostel Rooms
-  const defaultRooms = [
-    {
-      _id: 'default-1',
-      roomId: 'franklin-lounge',
-      name: 'Franklin Block Lounge',
-      description: 'Franklin Hostel A & B student hub. Casual hangout and tech discussions.',
-      activeUsers: 6,
-      category: 'hostel'
-    },
-    {
-      _id: 'default-2',
-      roomId: 'ngh-girls-hub',
-      name: 'NGH Girls Hub',
-      description: 'Exclusive lounge for NGH Hostel A & B students. Peer chat & study.',
-      activeUsers: 4,
-      category: 'hostel'
-    },
-    {
-      _id: 'default-3',
-      roomId: 'gaming-esports',
-      name: 'Gaming & Esports Lounge',
-      description: 'Valorant, BGMI, GTA, and multiplayer gaming matchmaking for Chitkara hostels.',
-      activeUsers: 8,
-      category: 'gaming'
-    },
-    {
-      _id: 'default-4',
-      roomId: 'late-night-study',
-      name: 'Late Night Study & Code',
-      description: 'Quiet study, exam revision, assignment collaboration, and coding help.',
-      activeUsers: 5,
-      category: 'study'
-    }
-  ];
-
   const fetchData = async () => {
     try {
-      // Fetch active rooms
-      try {
-        const roomsRes = await axios.get(`${API_URL}/api/rooms`, { timeout: 5000 });
-        if (roomsRes.data && roomsRes.data.length > 0) {
-          setRooms(roomsRes.data);
-        } else {
-          setRooms(defaultRooms);
-        }
-      } catch (err) {
-        setRooms(defaultRooms);
+      const roomsRes = await axios.get(`${API_URL}/api/rooms`, { timeout: 4000 });
+      if (roomsRes.data && roomsRes.data.length > 0) {
+        setRooms(roomsRes.data);
       }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+    } catch (err) {
+      // Keep initial defaultRooms seamlessly
     }
   };
 
@@ -124,12 +118,6 @@ const Dashboard = () => {
     navigate(`/chat/${roomId}`);
   };
 
-  const openEditProfile = () => {
-    setEditName(user?.name || '');
-    setEditHostel(user?.hostelBlock || '');
-    setIsEditProfileOpen(true);
-  };
-
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setIsUpdating(true);
@@ -141,8 +129,6 @@ const Dashboard = () => {
       alert(res.message);
     }
   };
-
-  const displayRooms = rooms.length > 0 ? rooms : defaultRooms;
 
   return (
     <div className="dashboard-container">
@@ -238,8 +224,8 @@ const Dashboard = () => {
         </div>
 
         <div className="rooms-grid">
-          {displayRooms.map(room => (
-            <div key={room._id} className="glass-card room-card">
+          {rooms.map(room => (
+            <div key={room._id || room.roomId} className="glass-card room-card">
               <div className="room-card-header flex-between">
                 <div className="room-icon flex-center">
                   <Hash size={24} color="#ea580c" />
