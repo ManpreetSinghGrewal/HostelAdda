@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Building, Sun, Moon, ShieldCheck, CheckCircle2, FileText, LogIn, UserPlus } from 'lucide-react';
+import { User, Mail, Lock, Building, Sun, Moon, ShieldCheck, CheckCircle2, FileText, LogIn, UserPlus, Check } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { AuthContext } from '../contexts/AuthContext';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -25,6 +25,7 @@ const Auth = () => {
   const [signupPassword, setSignupPassword] = useState('');
   const [signupGender, setSignupGender] = useState('Male');
   const [signupHostel, setSignupHostel] = useState('FRANKLIN-A');
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   // Google Setup State for first-time Google users
   const [googleSetupState, setGoogleSetupState] = useState(null);
@@ -86,7 +87,7 @@ const Auth = () => {
     }
   };
 
-  // Handle 1-Click Google OAuth Success (Any Google Account)
+  // Handle 1-Click Google OAuth Success (Verifies Email Address via Google)
   const handleGoogleSuccess = async (credentialResponse) => {
     setError('');
     setUserAlreadyExists(false);
@@ -95,6 +96,10 @@ const Auth = () => {
     try {
       const res = await googleAuth(credentialResponse.credential);
       if (res.requiresProfileDetails) {
+        setSignupName(res.name || '');
+        setSignupEmail(res.email || '');
+        setIsEmailVerified(true);
+
         setGoogleSetupState({
           credential: credentialResponse.credential,
           email: res.email,
@@ -182,7 +187,7 @@ const Auth = () => {
               ? 'Select your Gender & Hostel Block to complete setup'
               : authMode === 'login'
                 ? 'Sign in to access hostel rooms and peer chat'
-                : 'Create an account to start video & text chatting'}
+                : 'Create an account with email & Google verification'}
           </p>
         </div>
 
@@ -233,6 +238,9 @@ const Auth = () => {
               <div>
                 <div className="google-user-name">{googleSetupState.name}</div>
                 <div className="google-user-email">{googleSetupState.email}</div>
+                <div style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600, marginTop: 2 }}>
+                  ✓ Email Verified via Google
+                </div>
               </div>
             </div>
 
@@ -282,7 +290,7 @@ const Auth = () => {
           </form>
         ) : (
           <div>
-            {/* 1-CLICK GOOGLE SSO BUTTON (ANY GOOGLE ACCOUNT) */}
+            {/* 1-CLICK GOOGLE SSO / EMAIL VERIFICATION BUTTON */}
             <div className="google-sso-wrapper">
               <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
                 <GoogleLogin
@@ -292,13 +300,13 @@ const Auth = () => {
                   size="large"
                   width="340"
                   theme={isDark ? 'filled_black' : 'outline'}
-                  text="continue_with"
+                  text={authMode === 'signup' ? 'signup_with' : 'continue_with'}
                   logo_alignment="left"
                 />
               </div>
 
               <div style={{ fontSize: '0.775rem', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'center', justifyContent: 'center', marginTop: '0.25rem' }}>
-                <ShieldCheck size={15} /> Works with any Google Account
+                <ShieldCheck size={15} /> 1-Click Instant Email Verification via Google
               </div>
             </div>
 
@@ -354,7 +362,7 @@ const Auth = () => {
                 </div>
               </form>
             ) : (
-              /* SIGN UP FORM (NAME, EMAIL, PASSWORD, GENDER, HOSTEL) */
+              /* SIGN UP FORM WITH GOOGLE EMAIL VERIFICATION */
               <form onSubmit={handleSignupSubmit} className="auth-form mt-3">
                 <div className="input-group">
                   <label className="input-label">Full Name</label>
@@ -372,7 +380,14 @@ const Auth = () => {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">Email Address</label>
+                  <div className="flex-between">
+                    <label className="input-label">Email Address</label>
+                    {isEmailVerified && (
+                      <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                        <Check size={12} /> Verified via Google
+                      </span>
+                    )}
+                  </div>
                   <div className="input-with-icon">
                     <Mail size={18} className="input-icon" />
                     <input
@@ -380,7 +395,10 @@ const Auth = () => {
                       className="input-field w-100"
                       placeholder="name@example.com"
                       value={signupEmail}
-                      onChange={(e) => setSignupEmail(e.target.value)}
+                      onChange={(e) => {
+                        setSignupEmail(e.target.value);
+                        setIsEmailVerified(false);
+                      }}
                       required
                     />
                   </div>
