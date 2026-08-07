@@ -14,7 +14,6 @@ export const AuthProvider = ({ children }) => {
   });
 
   const googleAuth = async (credential, gender, hostelBlock) => {
-    // Check if live site (HTTPS) is trying to call unconfigured localhost backend
     if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_URL.includes('localhost')) {
       return {
         success: false,
@@ -54,6 +53,47 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const emailRegister = async (name, email, password, gender, hostelBlock) => {
+    try {
+      const { data } = await axios.post(`${API_URL}/api/auth/register`, {
+        name,
+        email,
+        password,
+        gender,
+        hostelBlock
+      }, { timeout: 15000 });
+
+      setUser(data);
+      localStorage.setItem('userInfo', JSON.stringify(data));
+      navigate('/dashboard');
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Registration failed.'
+      };
+    }
+  };
+
+  const emailLogin = async (email, password) => {
+    try {
+      const { data } = await axios.post(`${API_URL}/api/auth/login`, {
+        email,
+        password
+      }, { timeout: 15000 });
+
+      setUser(data);
+      localStorage.setItem('userInfo', JSON.stringify(data));
+      navigate('/dashboard');
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Login failed.'
+      };
+    }
+  };
+
   const updateProfile = async (name, hostelBlock) => {
     try {
       const { data } = await axios.put(`${API_URL}/api/users/${user._id}/profile`, { name, hostelBlock });
@@ -73,7 +113,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, logout, updateProfile, googleAuth }}>
+    <AuthContext.Provider value={{ user, logout, updateProfile, googleAuth, emailRegister, emailLogin }}>
       {children}
     </AuthContext.Provider>
   );
