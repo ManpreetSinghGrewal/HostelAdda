@@ -155,48 +155,37 @@ const Dashboard = () => {
           )}
         </header>
 
-        {/* Network Advisory / Disclaimer Banner */}
-        <div className="network-disclaimer-banner flex-between">
-          <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '0.85rem' }}>
-            <div className="disclaimer-icon-badge">
-              <Smartphone size={22} color="#ea580c" />
-            </div>
-            <div>
-              <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '0.5rem' }}>
-                <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>
-                  📶 Network Recommendation Before Matching
-                </span>
-                <span className="badge badge-orange" style={{ fontSize: '0.675rem' }}>Important Tip</span>
-              </div>
-              <p className="text-small text-muted" style={{ margin: 0, marginTop: '0.2rem', lineHeight: '1.4' }}>
-                For crystal-clear audio and zero black screens, <strong>please use your Personal Mobile Hotspot (4G/5G)</strong> before matching. Campus & hostel Wi-Fi firewalls often block live video streams.
-              </p>
+        {/* Slim Distinct Network Alert Bar */}
+        <div className="network-alert-strip flex-between">
+          <div className="flex-center" style={{ gap: '0.85rem' }}>
+            <div className="alert-pulse-dot"></div>
+            <div className="alert-text-content">
+              <span className="alert-highlight-tag">Network Advisory:</span>
+              <span> Please switch to your <strong>Personal Mobile Hotspot (4G/5G)</strong> before matching. Campus & hostel Wi-Fi firewalls often block live video streams.</span>
             </div>
           </div>
         </div>
 
-        {/* Random Match Banner */}
-        <div className="random-match-banner flex-between">
-          <div className="banner-content flex-center" style={{ justifyContent: 'flex-start', gap: '1.5rem' }}>
-            <div className="banner-icon flex-center">
-              <Users size={32} color="#ea580c" />
+        {/* Hero Random Matchmaking Card */}
+        <div className="match-launchpad-card flex-between">
+          <div className="match-launchpad-info flex-center" style={{ justifyContent: 'flex-start', gap: '1.5rem' }}>
+            <div className="match-icon-halo flex-center">
+              <Shuffle size={30} color="#6366f1" />
             </div>
             <div>
               <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '0.75rem', marginBottom: '0.35rem' }}>
-                <h3 className="heading-md" style={{ margin: 0 }}>HostelAdda Random Match</h3>
-                <span className="badge badge-purple">Instant 1-on-1</span>
+                <h3 className="heading-md" style={{ margin: 0 }}>Instant Random Matchmaking</h3>
+                <span className="badge badge-indigo">1-on-1 Live Peer</span>
               </div>
-              <p className="text-small" style={{ color: 'var(--text-secondary)' }}>
-                Get matched with another Chitkara student instantly.<br />
-                <span style={{ color: '#ea580c', fontWeight: 500 }}>💡 Tip: Use your personal mobile hotspot for the smoothest video connection.</span>
+              <p className="text-small" style={{ color: 'var(--text-secondary)', margin: 0 }}>
+                Connect 1-on-1 with verified Chitkara hostel students for instant video & voice chats.
               </p>
             </div>
           </div>
           <button 
-            className="btn btn-primary" 
+            className="btn btn-primary match-start-btn" 
             onClick={handleRandomMatch}
             disabled={isSearching}
-            style={{ padding: '0.85rem 1.75rem', fontWeight: '600' }}
           >
             {isSearching ? 'Searching Match...' : <><Shuffle size={18} /> Start Matching</>}
           </button>

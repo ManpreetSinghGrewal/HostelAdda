@@ -182,43 +182,95 @@
   margin-bottom: 0;
 }
 
-.network-disclaimer-banner {
-  background: linear-gradient(135deg, rgba(234, 88, 12, 0.12) 0%, rgba(249, 115, 22, 0.05) 100%);
-  border: 1px solid rgba(234, 88, 12, 0.3);
-  border-left: 4px solid #ea580c;
-  border-radius: 14px;
-  padding: 1.1rem 1.4rem;
+/* Distinct Slim Amber Network Alert Strip */
+.network-alert-strip {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-left: 3px solid #f59e0b;
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 4px 15px rgba(234, 88, 12, 0.06);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.04);
 }
 
-.disclaimer-icon-badge {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: rgba(234, 88, 12, 0.18);
-  border: 1px solid rgba(234, 88, 12, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.alert-pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 10px #f59e0b;
+  animation: pulseDot 2s infinite;
   flex-shrink: 0;
 }
 
-.random-match-banner {
-  background: linear-gradient(135deg, rgba(234, 88, 12, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
-  border: 1px solid rgba(234, 88, 12, 0.25);
-  border-radius: 16px;
-  padding: 2rem;
-  margin-bottom: 3rem;
-  box-shadow: 0 4px 20px rgba(234, 88, 12, 0.08);
+.alert-highlight-tag {
+  background: rgba(245, 158, 11, 0.18);
+  color: #f59e0b;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 0.5rem;
+  display: inline-block;
 }
 
-.banner-icon {
+.alert-text-content {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.alert-text-content strong {
+  color: var(--text-primary);
+}
+
+/* Premium Indigo-Orange Match Launchpad */
+.match-launchpad-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(234, 88, 12, 0.08) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  border-radius: 20px;
+  padding: 2.25rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.match-launchpad-card:hover {
+  border-color: rgba(99, 102, 241, 0.45);
+}
+
+.match-icon-halo {
   width: 64px;
   height: 64px;
-  border-radius: 16px;
-  background: rgba(234, 88, 12, 0.15);
-  border: 1px solid rgba(234, 88, 12, 0.3);
+  border-radius: 18px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+  flex-shrink: 0;
+}
+
+.match-start-btn {
+  background: linear-gradient(135deg, #6366f1 0%, #ea580c 100%) !important;
+  border: none !important;
+  padding: 0.95rem 2rem !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
+  transition: all 0.2s ease !important;
+}
+
+.match-start-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.45);
+}
+
+.badge-indigo {
+  background: rgba(99, 102, 241, 0.18);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.35);
 }
 
 .badge {
@@ -228,18 +280,6 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-}
-
-.badge-orange {
-  background: rgba(234, 88, 12, 0.2);
-  color: #ea580c;
-  border: 1px solid rgba(234, 88, 12, 0.35);
-}
-
-.badge-purple {
-  background: rgba(234, 88, 12, 0.15);
-  color: #ea580c;
-  border: 1px solid rgba(234, 88, 12, 0.3);
 }
 
 .badge-dark {
@@ -314,12 +354,16 @@
   .desktop-nav {
     display: none !important;
   }
-  .random-match-banner {
+  .match-launchpad-card {
     flex-direction: column;
     align-items: flex-start;
     gap: 1.5rem;
+    padding: 1.5rem;
   }
-  .random-match-banner .btn {
+  .match-launchpad-card .btn {
     width: 100%;
+  }
+  .network-alert-strip {
+    padding: 0.85rem 1rem;
   }
 }
