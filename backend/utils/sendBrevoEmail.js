@@ -8,7 +8,8 @@ const axios = require('axios');
  */
 const sendBrevoOTP = async (toEmail, otpCode) => {
   const apiKey = process.env.BREVO_API_KEY;
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'manpreet1405.becse24@chitkara.edu.in';
+  // Default to the verified Brevo sender email for guaranteed delivery
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'manpreetsgrewal5911@gmail.com';
   const senderName = process.env.BREVO_SENDER_NAME || 'HostelAdda Verification';
 
   const htmlContent = `
