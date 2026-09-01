@@ -139,16 +139,20 @@ const ChatRoom = () => {
     initializeMedia();
 
     const handleTrackEvent = (event, peerId) => {
-      console.log('Received remote track from', peerId);
-      const incomingStream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
+      console.log('Received remote track from', peerId, event.track.kind);
       
       setRemoteStreams(prev => {
-        const exists = prev.find(p => p.peerId === peerId);
-        if (exists) {
-          // Update stream if needed, though usually same stream object
-          return prev;
+        const existing = prev.find(p => p.peerId === peerId);
+        if (existing) {
+          // Add track to existing MediaStream if not already added
+          if (!existing.stream.getTracks().some(t => t.id === event.track.id)) {
+            existing.stream.addTrack(event.track);
+          }
+          return [...prev]; // trigger re-render
         }
-        return [...prev, { peerId, stream: incomingStream }];
+        
+        const stream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
+        return [...prev, { peerId, stream }];
       });
       setConnectionStatus('Connected!');
     };
