@@ -64,6 +64,7 @@ const ChatRoom = () => {
   const iceCandidateBuffers = useRef(new Map());
 
   const isOmegleMode = roomId.startsWith('random-');
+  const isDirectChat = roomId.startsWith('direct-');
   const noMicRooms = ['gaming', 'study'];
   const enforceNoMic = noMicRooms.includes(roomId);
 
@@ -282,6 +283,7 @@ const ChatRoom = () => {
       const peerId = data.callerId;
       if (data.callerName) {
         setPeerNames(prev => ({ ...prev, [peerId]: data.callerName }));
+        setPartnerName(data.callerName);
       }
       console.log('Received offer from', peerId);
       setConnectionStatus('Receiving connection...');
@@ -305,6 +307,7 @@ const ChatRoom = () => {
       const peerId = data.answererId;
       if (data.answererName) {
         setPeerNames(prev => ({ ...prev, [peerId]: data.answererName }));
+        setPartnerName(data.answererName);
       }
       console.log('Received answer from', peerId);
       const pc = peerConnectionsRef.current.get(peerId);
@@ -496,7 +499,7 @@ const ChatRoom = () => {
           </button>
           <div>
             <h2 className="heading-md">
-              {isOmegleMode ? 'HostelAdda Random Match' : `Room: ${roomId}`}
+              {isOmegleMode ? 'HostelAdda Random Match' : isDirectChat ? `Direct Chat: ${partnerName}` : `Room: ${roomId}`}
             </h2>
             <p className="text-small" style={{ color: connectionStatus === 'Connected!' ? '#10b981' : '#f59e0b' }}>
               {connectionStatus}

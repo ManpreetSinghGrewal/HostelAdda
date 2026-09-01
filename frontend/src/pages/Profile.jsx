@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { User, Mail, Building, ShieldCheck, Edit2, LogOut, CheckCircle2, X, Sun, Moon, ArrowLeft, UserPlus, Check, MessageSquare, Users, UserCheck } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
+import { SocketContext } from '../contexts/SocketContext';
 import { ThemeContext } from '../contexts/ThemeContext';
 import Navbar from '../components/Navbar';
 import './Profile.css';
@@ -12,6 +13,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const Profile = () => {
   const navigate = useNavigate();
   const { user, logout, updateProfile } = useContext(AuthContext);
+  const socket = useContext(SocketContext);
   const { isDark, toggleTheme } = useContext(ThemeContext);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -132,6 +134,31 @@ const Profile = () => {
     } catch (err) {
       setFriendActionMsg('Failed to decline request.');
     }
+  };
+
+  // Launch Direct 1-on-1 Chat Room for both Friend and User
+  const handleStartDirectChat = (friend) => {
+    if (!user || !friend) return;
+    const directRoomId = `direct-${[user._id, friend._id].sort().join('-')}`;
+    
+    // Notify friend via WebSocket if online
+    if (socket) {
+      socket.emit('start-direct-chat', {
+        toUserId: friend._id,
+        roomId: directRoomId,
+        callerName: user.name,
+        callerId: user._id,
+        callerPicture: user.picture
+      });
+    }
+
+    // Immediately navigate into private chat room
+    navigate(`/chat/${directRoomId}`, {
+      state: {
+        partnerUserId: friend._id,
+        partnerName: friend.name
+      }
+    });
   };
 
   return (
@@ -270,7 +297,11 @@ const Profile = () => {
                       <div className="text-small text-muted">{friend.hostelBlock || 'Hostel Resident'}</div>
                     </div>
                   </div>
-                  <button className="btn btn-secondary" style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }} onClick={() => navigate('/dashboard')}>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem' }} 
+                    onClick={() => handleStartDirectChat(friend)}
+                  >
                     <MessageSquare size={14} /> Chat
                   </button>
                 </div>

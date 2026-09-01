@@ -60,6 +60,7 @@ io.on('connection', async (socket) => {
 
   if (userId && userId !== 'undefined') {
     console.log(`User connected: ${userId} with socket ${socket.id}`);
+    socket.join(`user_${userId}`);
     await User.findByIdAndUpdate(userId, { isOnline: true });
     io.emit('user-online', userId);
     await broadcastOnlineStats();
@@ -75,9 +76,21 @@ io.on('connection', async (socket) => {
     socket.to(roomId).emit('user-joined', { socketId: socket.id, userId: roomUserId });
     
     const room = io.sockets.adapter.rooms.get(roomId);
-    if (room && !roomId.startsWith('random-')) {
+    if (room && !roomId.startsWith('random-') && !roomId.startsWith('direct-')) {
       io.emit('room-count-updated', { roomId, count: room.size });
     }
+  });
+
+  // Direct 1-on-1 Chat Invitation between Friends
+  socket.on('start-direct-chat', (data) => {
+    const { toUserId, roomId, callerName, callerId, callerPicture } = data;
+    console.log(`Direct chat invitation: ${callerName} (${callerId}) -> user_${toUserId}`);
+    socket.to(`user_${toUserId}`).emit('incoming-direct-chat', {
+      roomId,
+      callerName,
+      callerId,
+      callerPicture
+    });
   });
 
   // Random Matchmaking (Omegle style)
@@ -108,7 +121,7 @@ io.on('connection', async (socket) => {
 
     const room = io.sockets.adapter.rooms.get(roomId);
     if (!room || room.size === 0) {
-      if (!roomId.startsWith('random-')) {
+      if (!roomId.startsWith('random-') && !roomId.startsWith('direct-')) {
         try {
           await Message.deleteMany({ roomId });
           console.log(`Room ${roomId} is empty, cleared messages.`);
@@ -118,7 +131,7 @@ io.on('connection', async (socket) => {
       }
     }
     
-    if (!roomId.startsWith('random-')) {
+    if (!roomId.startsWith('random-') && !roomId.startsWith('direct-')) {
       io.emit('room-count-updated', { roomId, count: room ? room.size : 0 });
     }
   });
@@ -169,7 +182,7 @@ io.on('connection', async (socket) => {
         
         const room = io.sockets.adapter.rooms.get(roomId);
         if (room && room.size === 1) {
-          if (!roomId.startsWith('random-')) {
+          if (!roomId.startsWith('random-') && !roomId.startsWith('direct-')) {
             try {
               await Message.deleteMany({ roomId });
             } catch (error) {
@@ -178,7 +191,7 @@ io.on('connection', async (socket) => {
           }
         }
         
-        if (!roomId.startsWith('random-')) {
+        if (!roomId.startsWith('random-') && !roomId.startsWith('direct-')) {
           io.emit('room-count-updated', { roomId, count: room ? room.size - 1 : 0 });
         }
       }

@@ -8,11 +8,14 @@ import ChatRoom from './pages/ChatRoom';
 import About from './pages/About';
 import Profile from './pages/Profile';
 
+import DirectChatModal from './components/DirectChatModal';
+
 function App() {
   return (
     <ThemeProvider>
       <div className="app-container" style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
         <ParticleBackground />
+        <DirectChatModal />
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
