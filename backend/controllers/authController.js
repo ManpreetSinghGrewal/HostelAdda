@@ -208,7 +208,7 @@ const loginUser = async (req, res) => {
 // @desc    Authenticate with Google OAuth + Brevo 6-digit OTP Verification (@chitkara.edu.in only)
 // @route   POST /api/auth/google
 const googleLogin = async (req, res) => {
-  const { idToken, credential, gender, hostelBlock, otp } = req.body;
+  const { idToken, credential, gender, hostelBlock, otp, password } = req.body;
   const token = idToken || credential;
 
   if (!token) {
@@ -274,8 +274,12 @@ const googleLogin = async (req, res) => {
     // Delete verified OTP record
     await OTP.deleteMany({ email: cleanEmail });
 
-    // Existing User Login
+    // Existing User Login (Update password if user provided a new password)
     if (user) {
+      if (password) {
+        user.password = password;
+        await user.save();
+      }
       return res.status(200).json({
         _id: user._id,
         name: user.name,
@@ -287,12 +291,12 @@ const googleLogin = async (req, res) => {
       });
     }
 
-    // New User Registration with Google authenticated details
-    const randomPassword = Math.random().toString(36).slice(-10) + 'A1!';
+    // New User Registration with Google authenticated details + custom password
+    const userPassword = password || (Math.random().toString(36).slice(-10) + 'A1!');
     user = await User.create({
       name: name || cleanEmail.split('@')[0],
       email: cleanEmail,
-      password: randomPassword,
+      password: userPassword,
       gender: gender || 'Male',
       hostelBlock: hostelBlock || 'FRANKLIN-A'
     });

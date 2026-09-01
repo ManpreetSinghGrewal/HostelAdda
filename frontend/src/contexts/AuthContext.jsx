@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     return userInfo ? JSON.parse(userInfo) : null;
   });
 
-  const googleAuth = async (credential, gender, hostelBlock, otp) => {
+  const googleAuth = async (credential, gender, hostelBlock, otp, password) => {
     if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_URL.includes('localhost')) {
       return {
         success: false,
@@ -26,7 +26,8 @@ export const AuthProvider = ({ children }) => {
         credential,
         gender,
         hostelBlock,
-        otp
+        otp,
+        password
       }, { timeout: 15000 });
 
       if (data.requiresOtp) {

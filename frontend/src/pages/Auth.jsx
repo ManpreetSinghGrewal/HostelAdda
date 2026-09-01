@@ -35,6 +35,7 @@ const Auth = () => {
   // Google OAuth + OTP Verification State
   const [googleOtpState, setGoogleOtpState] = useState(null);
   const [googleOtpCode, setGoogleOtpCode] = useState('');
+  const [googlePassword, setGooglePassword] = useState('');
 
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [error, setError] = useState('');
@@ -189,11 +190,16 @@ const Auth = () => {
     }
   };
 
-  // Submit Google OAuth + 6-Digit OTP Verification
+  // Submit Google OAuth + 6-Digit OTP Verification + Password Creation
   const handleVerifyGoogleOTP = async (e) => {
     e.preventDefault();
     if (!googleOtpCode || googleOtpCode.trim().length !== 6) {
       setError('Please enter the 6-digit OTP code sent to your Google email.');
+      return;
+    }
+
+    if (googleOtpState?.isNewUser && !googlePassword) {
+      setError('Please create a password for direct email login next time.');
       return;
     }
 
@@ -205,7 +211,8 @@ const Auth = () => {
         googleOtpState.credential,
         googleOtpState.gender,
         googleOtpState.hostelBlock,
-        googleOtpCode.trim()
+        googleOtpCode.trim(),
+        googlePassword
       );
 
       if (!res.success) {
@@ -344,6 +351,24 @@ const Auth = () => {
                   required
                   maxLength={6}
                   style={{ letterSpacing: '4px', fontWeight: 'bold', fontSize: '1.1rem' }}
+                />
+              </div>
+            </div>
+
+            <div className="input-group mt-2">
+              <label className="input-label">
+                {googleOtpState.isNewUser ? 'Create Password (for future direct email login)' : 'Set/Update Password (optional)'}
+              </label>
+              <div className="input-with-icon">
+                <Lock size={18} className="input-icon" />
+                <input
+                  type="password"
+                  className="input-field w-100"
+                  placeholder="••••••••"
+                  value={googlePassword}
+                  onChange={(e) => setGooglePassword(e.target.value)}
+                  required={googleOtpState.isNewUser}
+                  minLength={4}
                 />
               </div>
             </div>
