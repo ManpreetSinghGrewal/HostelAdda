@@ -160,32 +160,34 @@ const Dashboard = () => {
           <div className="flex-center" style={{ gap: '0.85rem' }}>
             <div className="alert-pulse-dot"></div>
             <div className="alert-text-content">
-              <span className="alert-highlight-tag">Network Advisory:</span>
-              <span> Please switch to your <strong>Personal Mobile Hotspot (4G/5G)</strong> before matching. Campus & hostel Wi-Fi firewalls often block live video streams.</span>
+              <span className="alert-highlight-tag">Disclaimer:</span>
+              <span>For best video & audio quality, <strong>please use your Personal Mobile Hotspot (4G/5G)</strong> before matching. Campus & hostel Wi-Fi firewalls can block live video streams.</span>
             </div>
           </div>
         </div>
 
-        {/* Hero Random Matchmaking Card */}
-        <div className="match-launchpad-card flex-between">
-          <div className="match-launchpad-info flex-center" style={{ justifyContent: 'flex-start', gap: '1.5rem' }}>
-            <div className="match-icon-halo flex-center">
-              <Shuffle size={30} color="#6366f1" />
+        {/* Random Match Banner */}
+        <div className="random-match-banner flex-between">
+          <div className="banner-content flex-center" style={{ justifyContent: 'flex-start', gap: '1.5rem' }}>
+            <div className="banner-icon flex-center">
+              <Users size={32} color="#ea580c" />
             </div>
             <div>
               <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '0.75rem', marginBottom: '0.35rem' }}>
-                <h3 className="heading-md" style={{ margin: 0 }}>Instant Random Matchmaking</h3>
-                <span className="badge badge-indigo">1-on-1 Live Peer</span>
+                <h3 className="heading-md" style={{ margin: 0 }}>HostelAdda Random Match</h3>
+                <span className="badge badge-purple">Instant 1-on-1</span>
               </div>
-              <p className="text-small" style={{ color: 'var(--text-secondary)', margin: 0 }}>
-                Connect 1-on-1 with verified Chitkara hostel students for instant video & voice chats.
+              <p className="text-small" style={{ color: 'var(--text-secondary)' }}>
+                Get matched with another Chitkara student instantly.<br />
+                Peer text and video chat enabled.
               </p>
             </div>
           </div>
           <button 
-            className="btn btn-primary match-start-btn" 
+            className="btn btn-primary" 
             onClick={handleRandomMatch}
             disabled={isSearching}
+            style={{ padding: '0.85rem 1.75rem', fontWeight: '600' }}
           >
             {isSearching ? 'Searching Match...' : <><Shuffle size={18} /> Start Matching</>}
           </button>

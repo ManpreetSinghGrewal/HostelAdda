@@ -226,51 +226,22 @@
   color: var(--text-primary);
 }
 
-/* Premium Indigo-Orange Match Launchpad */
-.match-launchpad-card {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(234, 88, 12, 0.08) 100%);
-  border: 1px solid rgba(99, 102, 241, 0.28);
-  border-radius: 20px;
-  padding: 2.25rem;
+/* Original Random Match Banner */
+.random-match-banner {
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border: 1px solid rgba(234, 88, 12, 0.25);
+  border-radius: 16px;
+  padding: 2rem;
   margin-bottom: 3rem;
-  box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2);
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 4px 20px rgba(234, 88, 12, 0.08);
 }
 
-.match-launchpad-card:hover {
-  border-color: rgba(99, 102, 241, 0.45);
-}
-
-.match-icon-halo {
+.banner-icon {
   width: 64px;
   height: 64px;
-  border-radius: 18px;
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.35);
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
-  flex-shrink: 0;
-}
-
-.match-start-btn {
-  background: linear-gradient(135deg, #6366f1 0%, #ea580c 100%) !important;
-  border: none !important;
-  padding: 0.95rem 2rem !important;
-  font-size: 0.95rem !important;
-  font-weight: 700 !important;
-  border-radius: 14px !important;
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
-  transition: all 0.2s ease !important;
-}
-
-.match-start-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.45);
-}
-
-.badge-indigo {
-  background: rgba(99, 102, 241, 0.18);
-  color: #818cf8;
-  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 16px;
+  background: rgba(234, 88, 12, 0.15);
+  border: 1px solid rgba(234, 88, 12, 0.3);
 }
 
 .badge {
@@ -280,6 +251,12 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+.badge-purple {
+  background: rgba(234, 88, 12, 0.15);
+  color: #ea580c;
+  border: 1px solid rgba(234, 88, 12, 0.3);
 }
 
 .badge-dark {
@@ -354,13 +331,12 @@
   .desktop-nav {
     display: none !important;
   }
-  .match-launchpad-card {
+  .random-match-banner {
     flex-direction: column;
     align-items: flex-start;
     gap: 1.5rem;
-    padding: 1.5rem;
   }
-  .match-launchpad-card .btn {
+  .random-match-banner .btn {
     width: 100%;
   }
   .network-alert-strip {
