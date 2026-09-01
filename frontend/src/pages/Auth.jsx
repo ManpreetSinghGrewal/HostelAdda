@@ -464,7 +464,7 @@ const Auth = () => {
               </div>
 
               <div style={{ fontSize: '0.775rem', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'center', justifyContent: 'center', marginTop: '0.25rem' }}>
-                <ShieldCheck size={15} /> 1-Click Google Auth + Brevo OTP Verification
+                <ShieldCheck size={15} /> Strictly @chitkara.edu.in accounts only
               </div>
             </div>
 
@@ -483,7 +483,7 @@ const Auth = () => {
                     <input
                       type="email"
                       className="input-field w-100"
-                      placeholder="name@example.com"
+                      placeholder="student@chitkara.edu.in"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
                       required
@@ -544,7 +544,7 @@ const Auth = () => {
                     <input
                       type="email"
                       className="input-field w-100"
-                      placeholder="name@example.com"
+                      placeholder="student@chitkara.edu.in"
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
                       required

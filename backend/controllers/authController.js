@@ -10,7 +10,11 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'secret123', { expiresIn: '30d' });
 };
 
-// @desc    Send 6-digit OTP to user email via Brevo
+const isChitkaraEmail = (email) => {
+  return email && email.toLowerCase().trim().endsWith('@chitkara.edu.in');
+};
+
+// @desc    Send 6-digit OTP to user email via Brevo (@chitkara.edu.in only)
 // @route   POST /api/auth/send-otp
 const sendOTP = async (req, res) => {
   const { email } = req.body;
@@ -20,6 +24,12 @@ const sendOTP = async (req, res) => {
   }
 
   const cleanEmail = email.toLowerCase().trim();
+
+  if (!isChitkaraEmail(cleanEmail)) {
+    return res.status(400).json({
+      message: 'Access Denied: Only @chitkara.edu.in email accounts are permitted.'
+    });
+  }
 
   try {
     const userExists = await User.findOne({ email: cleanEmail });
@@ -40,7 +50,7 @@ const sendOTP = async (req, res) => {
     const emailResult = await sendBrevoOTP(cleanEmail, otpCode);
 
     if (emailResult.success) {
-      res.status(200).json({ message: 'OTP sent to your email.' });
+      res.status(200).json({ message: 'OTP sent to your Chitkara email.' });
     } else {
       res.status(500).json({ message: emailResult.message || 'Failed to send OTP email.' });
     }
@@ -50,7 +60,7 @@ const sendOTP = async (req, res) => {
   }
 };
 
-// @desc    Verify 6-digit OTP and complete Sign Up
+// @desc    Verify 6-digit OTP and complete Sign Up (@chitkara.edu.in only)
 // @route   POST /api/auth/verify-otp
 const verifyOTPAndRegister = async (req, res) => {
   const { email, otp, name, password, gender, hostelBlock } = req.body;
@@ -60,6 +70,12 @@ const verifyOTPAndRegister = async (req, res) => {
   }
 
   const cleanEmail = email.toLowerCase().trim();
+
+  if (!isChitkaraEmail(cleanEmail)) {
+    return res.status(400).json({
+      message: 'Access Denied: Only @chitkara.edu.in email accounts are permitted.'
+    });
+  }
 
   try {
     const otpRecord = await OTP.findOne({ email: cleanEmail, otp: otp.trim() });
@@ -99,7 +115,7 @@ const verifyOTPAndRegister = async (req, res) => {
   }
 };
 
-// @desc    Register a new user directly with Email + Password
+// @desc    Register a new user directly with Email + Password (@chitkara.edu.in only)
 // @route   POST /api/auth/register
 const registerUser = async (req, res) => {
   const { name, email, password, gender, hostelBlock } = req.body;
@@ -109,6 +125,12 @@ const registerUser = async (req, res) => {
   }
 
   const cleanEmail = email.toLowerCase().trim();
+
+  if (!isChitkaraEmail(cleanEmail)) {
+    return res.status(400).json({
+      message: 'Access Denied: Only @chitkara.edu.in email accounts are permitted.'
+    });
+  }
 
   try {
     const userExists = await User.findOne({ email: cleanEmail });
@@ -156,6 +178,12 @@ const loginUser = async (req, res) => {
 
   const cleanEmail = email.toLowerCase().trim();
 
+  if (!isChitkaraEmail(cleanEmail)) {
+    return res.status(400).json({
+      message: 'Access Denied: Only @chitkara.edu.in email accounts are permitted.'
+    });
+  }
+
   try {
     const user = await User.findOne({ email: cleanEmail });
 
@@ -177,7 +205,7 @@ const loginUser = async (req, res) => {
   }
 };
 
-// @desc    Authenticate with Google OAuth + Brevo 6-digit OTP Verification
+// @desc    Authenticate with Google OAuth + Brevo 6-digit OTP Verification (@chitkara.edu.in only)
 // @route   POST /api/auth/google
 const googleLogin = async (req, res) => {
   const { idToken, credential, gender, hostelBlock, otp } = req.body;
@@ -208,6 +236,13 @@ const googleLogin = async (req, res) => {
     const { email, name, picture } = payload;
     const cleanEmail = email.toLowerCase().trim();
 
+    // Enforce @chitkara.edu.in domain restriction
+    if (!isChitkaraEmail(cleanEmail)) {
+      return res.status(400).json({
+        message: 'Access Denied: Only @chitkara.edu.in accounts are permitted.'
+      });
+    }
+
     let user = await User.findOne({ email: cleanEmail });
 
     // Step 1: If OTP is not provided yet, generate and send 6-digit OTP via Brevo to Google email
@@ -226,7 +261,7 @@ const googleLogin = async (req, res) => {
         credential: token,
         isNewUser: !user,
         requiresProfileDetails: !user && (!gender || !hostelBlock),
-        message: '6-digit OTP code sent to your Google email address.'
+        message: '6-digit OTP code sent to your Chitkara email address.'
       });
     }
 
