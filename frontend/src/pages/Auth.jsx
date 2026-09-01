@@ -15,7 +15,7 @@ const Auth = () => {
   // Mode: 'login' or 'signup'
   const [authMode, setAuthMode] = useState('login');
 
-  // OTP Verification Step State
+  // Email OTP Verification Step State
   const [isOtpStep, setIsOtpStep] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpSentMsg, setOtpSentMsg] = useState('');
@@ -32,10 +32,11 @@ const Auth = () => {
   const [signupGender, setSignupGender] = useState('Male');
   const [signupHostel, setSignupHostel] = useState('FRANKLIN-A');
 
-  // Google Setup State for first-time Google users
-  const [googleSetupState, setGoogleSetupState] = useState(null);
+  // Google OAuth + OTP Verification State
+  const [googleOtpState, setGoogleOtpState] = useState(null);
+  const [googleOtpCode, setGoogleOtpCode] = useState('');
+
   const [showTermsModal, setShowTermsModal] = useState(false);
-  
   const [error, setError] = useState('');
   const [userAlreadyExists, setUserAlreadyExists] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -105,7 +106,7 @@ const Auth = () => {
     }
   };
 
-  // Step 2: Verify OTP and Register User
+  // Step 2: Verify Email OTP and Register User
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
     if (!otpCode || otpCode.trim().length !== 6) {
@@ -136,14 +137,15 @@ const Auth = () => {
     }
   };
 
-  // Resend OTP handler
+  // Resend Email OTP
   const handleResendOTP = async () => {
     if (resendCooldown > 0) return;
     setError('');
     setIsLoading(true);
 
     try {
-      const res = await sendOTP(signupEmail);
+      const targetEmail = googleOtpState ? googleOtpState.email : signupEmail;
+      const res = await sendOTP(targetEmail);
       if (res.success) {
         setOtpSentMsg('New 6-digit OTP code sent via Brevo!');
         setResendCooldown(60);
@@ -157,7 +159,7 @@ const Auth = () => {
     }
   };
 
-  // Handle 1-Click Google OAuth Success
+  // Handle 1-Click Google OAuth Success -> Triggers 6-Digit Brevo OTP
   const handleGoogleSuccess = async (credentialResponse) => {
     setError('');
     setUserAlreadyExists(false);
@@ -165,15 +167,18 @@ const Auth = () => {
 
     try {
       const res = await googleAuth(credentialResponse.credential);
-      if (res.requiresProfileDetails) {
-        setGoogleSetupState({
+      if (res.requiresOtp) {
+        setGoogleOtpState({
           credential: credentialResponse.credential,
           email: res.email,
           name: res.name,
           picture: res.picture,
+          isNewUser: res.isNewUser,
           gender: 'Male',
           hostelBlock: 'FRANKLIN-A'
         });
+        setOtpSentMsg(`6-digit OTP code sent via Brevo to ${res.email}`);
+        setResendCooldown(60);
       } else if (!res.success) {
         setError(res.message);
       }
@@ -184,31 +189,30 @@ const Auth = () => {
     }
   };
 
-  // Submit First-Time Profile Setup for Google User
-  const handleCompleteGoogleSetup = async (e) => {
+  // Submit Google OAuth + 6-Digit OTP Verification
+  const handleVerifyGoogleOTP = async (e) => {
     e.preventDefault();
-    if (!googleSetupState.gender) {
-      setError('Please select your gender.');
-      return;
-    }
-    if (!googleSetupState.hostelBlock) {
-      setError('Please select your hostel block.');
+    if (!googleOtpCode || googleOtpCode.trim().length !== 6) {
+      setError('Please enter the 6-digit OTP code sent to your Google email.');
       return;
     }
 
     setError('');
     setIsLoading(true);
+
     try {
       const res = await googleAuth(
-        googleSetupState.credential,
-        googleSetupState.gender,
-        googleSetupState.hostelBlock
+        googleOtpState.credential,
+        googleOtpState.gender,
+        googleOtpState.hostelBlock,
+        googleOtpCode.trim()
       );
+
       if (!res.success) {
         setError(res.message);
       }
     } catch (err) {
-      setError(err.message || 'Profile setup failed.');
+      setError(err.message || 'Google OTP verification failed.');
     } finally {
       setIsLoading(false);
     }
@@ -217,6 +221,7 @@ const Auth = () => {
   const switchMode = (mode) => {
     setAuthMode(mode);
     setIsOtpStep(false);
+    setGoogleOtpState(null);
     setError('');
     setUserAlreadyExists(false);
   };
@@ -243,8 +248,8 @@ const Auth = () => {
         {/* Header */}
         <div className="auth-header text-center">
           <h2 className="heading-lg">
-            {googleSetupState 
-              ? 'Complete Profile' 
+            {googleOtpState 
+              ? 'Google Email OTP Verification' 
               : isOtpStep
                 ? 'Verify Email OTP'
                 : authMode === 'login' 
@@ -252,8 +257,8 @@ const Auth = () => {
                   : 'Join HostelAdda'}
           </h2>
           <p className="text-body">
-            {googleSetupState
-              ? 'Select your Gender & Hostel Block to complete setup'
+            {googleOtpState
+              ? `Enter the 6-digit OTP sent via Brevo to ${googleOtpState.email}`
               : isOtpStep
                 ? `Enter the 6-digit code sent to ${signupEmail}`
                 : authMode === 'login'
@@ -263,7 +268,7 @@ const Auth = () => {
         </div>
 
         {/* Tab Switcher (Sign In vs Sign Up) */}
-        {!googleSetupState && !isOtpStep && (
+        {!googleOtpState && !isOtpStep && (
           <div className="auth-tabs mb-4">
             <button
               className={`auth-tab ${authMode === 'login' ? 'active' : ''}`}
@@ -298,73 +303,108 @@ const Auth = () => {
         )}
 
         {/* Success Alert for OTP Sent */}
-        {otpSentMsg && isOtpStep && !error && (
+        {otpSentMsg && (googleOtpState || isOtpStep) && !error && (
           <div style={{ color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '1.25rem', fontSize: '0.85rem', textAlign: 'center' }}>
             {otpSentMsg}
           </div>
         )}
 
-        {/* GOOGLE FIRST-TIME SETUP FORM */}
-        {googleSetupState ? (
-          <form onSubmit={handleCompleteGoogleSetup} className="auth-form">
+        {/* GOOGLE OAUTH 6-DIGIT OTP VERIFICATION FORM */}
+        {googleOtpState ? (
+          <form onSubmit={handleVerifyGoogleOTP} className="auth-form">
+            <div className="back-link mb-2" onClick={() => setGoogleOtpState(null)}>
+              <ArrowLeft size={16} /> Back to Sign In
+            </div>
+
             <div className="google-profile-card">
-              {googleSetupState.picture ? (
-                <img src={googleSetupState.picture} alt="Profile" className="google-avatar" />
+              {googleOtpState.picture ? (
+                <img src={googleOtpState.picture} alt="Profile" className="google-avatar" />
               ) : (
                 <User size={32} className="google-avatar" />
               )}
               <div>
-                <div className="google-user-name">{googleSetupState.name}</div>
-                <div className="google-user-email">{googleSetupState.email}</div>
-                <div style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600, marginTop: 2 }}>
-                  ✓ Email Verified via Google
+                <div className="google-user-name">{googleOtpState.name}</div>
+                <div className="google-user-email">{googleOtpState.email}</div>
+                <div style={{ color: '#818cf8', fontSize: '0.75rem', fontWeight: 600, marginTop: 2 }}>
+                  🔑 6-Digit OTP sent via Brevo
                 </div>
               </div>
             </div>
 
             <div className="input-group">
-              <label className="input-label">Gender</label>
+              <label className="input-label">6-Digit Verification OTP Code</label>
               <div className="input-with-icon">
-                <User size={18} className="input-icon" />
-                <select
-                  name="gender"
+                <KeyRound size={18} className="input-icon" />
+                <input
+                  type="text"
                   className="input-field w-100"
-                  value={googleSetupState.gender}
-                  onChange={(e) => setGoogleSetupState({ ...googleSetupState, gender: e.target.value, hostelBlock: e.target.value === 'Male' ? maleHostels[0] : femaleHostels[0] })}
+                  placeholder="e.g. 584920"
+                  value={googleOtpCode}
+                  onChange={(e) => setGoogleOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   required
-                  style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Others">Others</option>
-                </select>
+                  maxLength={6}
+                  style={{ letterSpacing: '4px', fontWeight: 'bold', fontSize: '1.1rem' }}
+                />
               </div>
             </div>
 
-            <div className="input-group">
-              <label className="input-label">Hostel Name & Block</label>
-              <div className="input-with-icon">
-                <Building size={18} className="input-icon" />
-                <select
-                  name="hostelBlock"
-                  className="input-field w-100"
-                  value={googleSetupState.hostelBlock}
-                  onChange={(e) => setGoogleSetupState({ ...googleSetupState, hostelBlock: e.target.value })}
-                  required
-                  style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-                >
-                  {(googleSetupState.gender === 'Male' ? maleHostels : googleSetupState.gender === 'Female' ? femaleHostels : [...maleHostels, ...femaleHostels]).map((hostel) => (
-                    <option key={hostel} value={hostel}>
-                      {hostel}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            {googleOtpState.isNewUser && (
+              <>
+                <div className="input-group mt-2">
+                  <label className="input-label">Gender</label>
+                  <div className="input-with-icon">
+                    <User size={18} className="input-icon" />
+                    <select
+                      className="input-field w-100"
+                      value={googleOtpState.gender}
+                      onChange={(e) => setGoogleOtpState({ ...googleOtpState, gender: e.target.value, hostelBlock: e.target.value === 'Male' ? maleHostels[0] : femaleHostels[0] })}
+                      required
+                      style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Others">Others</option>
+                    </select>
+                  </div>
+                </div>
 
-            <button type="submit" className="btn btn-primary w-100 mt-4" disabled={isLoading}>
-              {isLoading ? 'Completing Setup...' : 'Enter HostelAdda'}
+                <div className="input-group">
+                  <label className="input-label">Hostel Name & Block</label>
+                  <div className="input-with-icon">
+                    <Building size={18} className="input-icon" />
+                    <select
+                      className="input-field w-100"
+                      value={googleOtpState.hostelBlock}
+                      onChange={(e) => setGoogleOtpState({ ...googleOtpState, hostelBlock: e.target.value })}
+                      required
+                      style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                    >
+                      {(googleOtpState.gender === 'Male' ? maleHostels : googleOtpState.gender === 'Female' ? femaleHostels : [...maleHostels, ...femaleHostels]).map((hostel) => (
+                        <option key={hostel} value={hostel}>
+                          {hostel}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <button type="submit" className="btn btn-primary w-100 mt-4" disabled={isLoading || googleOtpCode.length !== 6}>
+              {isLoading ? 'Verifying OTP...' : 'Verify OTP & Complete Google Login'}
             </button>
+
+            <div className="flex-between mt-3 text-small">
+              <span style={{ color: 'var(--text-secondary)' }}>Didn't receive email?</span>
+              <button
+                type="button"
+                className="btn-resend"
+                onClick={handleResendOTP}
+                disabled={resendCooldown > 0 || isLoading}
+              >
+                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP via Brevo'}
+              </button>
+            </div>
           </form>
         ) : isOtpStep ? (
           /* STEP 2: BREVO EMAIL OTP VERIFICATION FORM */
@@ -424,7 +464,7 @@ const Auth = () => {
               </div>
 
               <div style={{ fontSize: '0.775rem', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'center', justifyContent: 'center', marginTop: '0.25rem' }}>
-                <ShieldCheck size={15} /> 1-Click Instant Sign In via Google
+                <ShieldCheck size={15} /> 1-Click Google Auth + Brevo OTP Verification
               </div>
             </div>
 

@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     return userInfo ? JSON.parse(userInfo) : null;
   });
 
-  const googleAuth = async (credential, gender, hostelBlock) => {
+  const googleAuth = async (credential, gender, hostelBlock, otp) => {
     if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_URL.includes('localhost')) {
       return {
         success: false,
@@ -25,15 +25,19 @@ export const AuthProvider = ({ children }) => {
       const { data } = await axios.post(`${API_URL}/api/auth/google`, {
         credential,
         gender,
-        hostelBlock
+        hostelBlock,
+        otp
       }, { timeout: 15000 });
 
-      if (data.requiresProfileDetails) {
+      if (data.requiresOtp) {
         return {
-          requiresProfileDetails: true,
+          requiresOtp: true,
           email: data.email,
           name: data.name,
           picture: data.picture,
+          credential: data.credential || credential,
+          isNewUser: data.isNewUser,
+          requiresProfileDetails: data.requiresProfileDetails,
           message: data.message
         };
       }
@@ -48,7 +52,7 @@ export const AuthProvider = ({ children }) => {
       }
       return {
         success: false,
-        message: error.response?.data?.message || 'Google Sign-In failed'
+        message: error.response?.data?.message || 'Google Authentication failed'
       };
     }
   };

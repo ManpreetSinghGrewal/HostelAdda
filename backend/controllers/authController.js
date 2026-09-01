@@ -177,10 +177,10 @@ const loginUser = async (req, res) => {
   }
 };
 
-// @desc    Authenticate with Google OAuth (Any Google ID)
+// @desc    Authenticate with Google OAuth + Brevo 6-digit OTP Verification
 // @route   POST /api/auth/google
 const googleLogin = async (req, res) => {
-  const { idToken, credential, gender, hostelBlock } = req.body;
+  const { idToken, credential, gender, hostelBlock, otp } = req.body;
   const token = idToken || credential;
 
   if (!token) {
@@ -210,6 +210,36 @@ const googleLogin = async (req, res) => {
 
     let user = await User.findOne({ email: cleanEmail });
 
+    // Step 1: If OTP is not provided yet, generate and send 6-digit OTP via Brevo to Google email
+    if (!otp) {
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      await OTP.deleteMany({ email: cleanEmail });
+      await OTP.create({ email: cleanEmail, otp: otpCode });
+
+      await sendBrevoOTP(cleanEmail, otpCode);
+
+      return res.status(200).json({
+        requiresOtp: true,
+        email: cleanEmail,
+        name: name,
+        picture: picture,
+        credential: token,
+        isNewUser: !user,
+        requiresProfileDetails: !user && (!gender || !hostelBlock),
+        message: '6-digit OTP code sent to your Google email address.'
+      });
+    }
+
+    // Step 2: If OTP is provided, verify it against DB
+    const otpRecord = await OTP.findOne({ email: cleanEmail, otp: otp.trim() });
+    if (!otpRecord) {
+      return res.status(400).json({ message: 'Invalid or expired OTP code. Please try again.' });
+    }
+
+    // Delete verified OTP record
+    await OTP.deleteMany({ email: cleanEmail });
+
+    // Existing User Login
     if (user) {
       return res.status(200).json({
         _id: user._id,
@@ -222,25 +252,14 @@ const googleLogin = async (req, res) => {
       });
     }
 
-    // If User does not exist yet and gender/hostelBlock missing, request profile completion
-    if (!gender || !hostelBlock) {
-      return res.status(200).json({
-        requiresProfileDetails: true,
-        email: cleanEmail,
-        name: name,
-        picture: picture,
-        message: 'Please select your Gender and Hostel Block to complete registration.'
-      });
-    }
-
-    // Create new user with Google authenticated details
+    // New User Registration with Google authenticated details
     const randomPassword = Math.random().toString(36).slice(-10) + 'A1!';
     user = await User.create({
       name: name || cleanEmail.split('@')[0],
       email: cleanEmail,
       password: randomPassword,
-      gender: gender,
-      hostelBlock: hostelBlock
+      gender: gender || 'Male',
+      hostelBlock: hostelBlock || 'FRANKLIN-A'
     });
 
     res.status(201).json({
