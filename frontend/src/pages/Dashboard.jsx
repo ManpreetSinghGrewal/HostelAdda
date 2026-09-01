@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Video, Hash, Shuffle, Users, ShieldCheck, Edit2, X, LogIn, MessageCircle, Loader2 } from 'lucide-react';
+import { Video, Hash, Shuffle, Users, ShieldCheck, Edit2, X, LogIn, MessageCircle, Loader2, Smartphone, Wifi, AlertTriangle } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
 import { SocketContext } from '../contexts/SocketContext';
 import Navbar from '../components/Navbar';
@@ -155,6 +155,26 @@ const Dashboard = () => {
           )}
         </header>
 
+        {/* Network Advisory / Disclaimer Banner */}
+        <div className="network-disclaimer-banner flex-between">
+          <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '0.85rem' }}>
+            <div className="disclaimer-icon-badge">
+              <Smartphone size={22} color="#ea580c" />
+            </div>
+            <div>
+              <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '0.5rem' }}>
+                <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>
+                  📶 Network Recommendation Before Matching
+                </span>
+                <span className="badge badge-orange" style={{ fontSize: '0.675rem' }}>Important Tip</span>
+              </div>
+              <p className="text-small text-muted" style={{ margin: 0, marginTop: '0.2rem', lineHeight: '1.4' }}>
+                For crystal-clear audio and zero black screens, <strong>please use your Personal Mobile Hotspot (4G/5G)</strong> before matching. Campus & hostel Wi-Fi firewalls often block live video streams.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Random Match Banner */}
         <div className="random-match-banner flex-between">
           <div className="banner-content flex-center" style={{ justifyContent: 'flex-start', gap: '1.5rem' }}>
@@ -168,7 +188,7 @@ const Dashboard = () => {
               </div>
               <p className="text-small" style={{ color: 'var(--text-secondary)' }}>
                 Get matched with another Chitkara student instantly.<br />
-                Peer text and video chat enabled.
+                <span style={{ color: '#ea580c', fontWeight: 500 }}>💡 Tip: Use your personal mobile hotspot for the smoothest video connection.</span>
               </p>
             </div>
           </div>

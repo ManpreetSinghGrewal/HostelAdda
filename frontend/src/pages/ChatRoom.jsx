@@ -543,9 +543,12 @@ const ChatRoom = () => {
             
             {/* Render all remote streams */}
             {isSearchingNext ? (
-              <div className="video-tile loading-tile flex-center">
+              <div className="video-tile loading-tile flex-center" style={{ flexDirection: 'column', padding: '2rem', textAlign: 'center' }}>
                 <div className="loader"></div>
-                <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Searching for partner...</p>
+                <p style={{ marginTop: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>Searching for partner...</p>
+                <p className="text-small" style={{ color: '#ea580c', marginTop: '0.75rem', background: 'rgba(234, 88, 12, 0.12)', padding: '0.4rem 0.85rem', borderRadius: '12px', border: '1px solid rgba(234, 88, 12, 0.25)', maxWidth: '320px' }}>
+                  📶 <strong>Tip:</strong> Use Personal Mobile Hotspot (4G/5G) for the smoothest connection without black screens.
+                </p>
               </div>
             ) : remoteStreams.map((remote) => (
               <RemoteVideoTile
