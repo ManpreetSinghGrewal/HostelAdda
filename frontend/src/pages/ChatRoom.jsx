@@ -9,6 +9,29 @@ import './ChatRoom.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
+const RemoteVideoTile = ({ stream, name }) => {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(e => console.warn('Play prevented for remote video:', e));
+    }
+  }, [stream]);
+
+  return (
+    <div className="video-tile">
+      <video 
+        ref={videoRef} 
+        autoPlay 
+        playsInline 
+        className="fullscreen-video"
+      ></video>
+      <div className="participant-label">{name}</div>
+    </div>
+  );
+};
+
 const ChatRoom = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
@@ -83,9 +106,19 @@ const ChatRoom = () => {
     const rtcConfig = {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
         { urls: 'stun:global.stun.twilio.com:3478' },
+        // Standard TURN UDP & TCP fallback
         {
           urls: 'turn:openrelay.metered.ca:80',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:80?transport=tcp',
           username: 'openrelayproject',
           credential: 'openrelayproject'
         },
@@ -98,8 +131,25 @@ const ChatRoom = () => {
           urls: 'turn:openrelay.metered.ca:443?transport=tcp',
           username: 'openrelayproject',
           credential: 'openrelayproject'
+        },
+        // TURNS over TLS (Port 443 & 5349) - Essential for strict Campus & Hostel Wi-Fi / DPI Firewalls
+        {
+          urls: 'turns:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turns:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turns:openrelay.metered.ca:5349?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
         }
-      ]
+      ],
+      iceCandidatePoolSize: 10
     };
 
     const initializeMedia = async () => {
@@ -142,13 +192,15 @@ const ChatRoom = () => {
       console.log('Received remote track from', peerId, event.track.kind);
       
       setRemoteStreams(prev => {
-        const existing = prev.find(p => p.peerId === peerId);
-        if (existing) {
-          // Add track to existing MediaStream if not already added
+        const existingIndex = prev.findIndex(p => p.peerId === peerId);
+        if (existingIndex !== -1) {
+          const existing = prev[existingIndex];
           if (!existing.stream.getTracks().some(t => t.id === event.track.id)) {
             existing.stream.addTrack(event.track);
           }
-          return [...prev]; // trigger re-render
+          const updated = [...prev];
+          updated[existingIndex] = { ...existing };
+          return updated;
         }
         
         const stream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
@@ -180,11 +232,13 @@ const ChatRoom = () => {
 
       pc.oniceconnectionstatechange = () => {
         console.log(`ICE Connection State [${peerIdTarget}]:`, pc.iceConnectionState);
-        if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
-          // Remove remote stream on failure
-          setRemoteStreams(prev => prev.filter(p => p.peerId !== peerIdTarget));
-          pc.close();
-          peerConnectionsRef.current.delete(peerIdTarget);
+        if (pc.iceConnectionState === 'failed') {
+          console.warn(`ICE failed for [${peerIdTarget}], attempting ICE restart...`);
+          try {
+            pc.restartIce();
+          } catch (e) {
+            console.error('Error restarting ICE:', e);
+          }
         }
       };
     };
@@ -491,22 +545,11 @@ const ChatRoom = () => {
                 <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Searching for partner...</p>
               </div>
             ) : remoteStreams.map((remote) => (
-              <div key={remote.peerId} className="video-tile">
-                <video 
-                  autoPlay 
-                  playsInline 
-                  className="fullscreen-video"
-                  ref={el => {
-                    if (el && el.srcObject !== remote.stream) {
-                      el.srcObject = remote.stream;
-                      el.play().catch(e => console.warn('Play prevented:', e));
-                    }
-                  }}
-                ></video>
-                <div className="participant-label">
-                  {isOmegleMode ? partnerName : (peerNames[remote.peerId] || 'Partner')}
-                </div>
-              </div>
+              <RemoteVideoTile
+                key={remote.peerId}
+                stream={remote.stream}
+                name={isOmegleMode ? partnerName : (peerNames[remote.peerId] || 'Partner')}
+              />
             ))}
 
             {/* Local Video */}
