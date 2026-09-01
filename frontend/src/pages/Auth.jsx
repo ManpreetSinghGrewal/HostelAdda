@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Building, Sun, Moon, ShieldCheck, CheckCircle2, FileText, LogIn, UserPlus, Check } from 'lucide-react';
+import { User, Mail, Lock, Building, Sun, Moon, ShieldCheck, CheckCircle2, FileText, LogIn, UserPlus, KeyRound, ArrowLeft, Send } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { AuthContext } from '../contexts/AuthContext';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -9,11 +9,17 @@ import './Auth.css';
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { user, googleAuth, emailLogin, emailRegister } = useContext(AuthContext);
+  const { user, googleAuth, emailLogin, sendOTP, verifyOTP } = useContext(AuthContext);
   const { isDark, toggleTheme } = useContext(ThemeContext);
 
   // Mode: 'login' or 'signup'
   const [authMode, setAuthMode] = useState('login');
+
+  // OTP Verification Step State
+  const [isOtpStep, setIsOtpStep] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSentMsg, setOtpSentMsg] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Login Form State
   const [loginEmail, setLoginEmail] = useState('');
@@ -25,7 +31,6 @@ const Auth = () => {
   const [signupPassword, setSignupPassword] = useState('');
   const [signupGender, setSignupGender] = useState('Male');
   const [signupHostel, setSignupHostel] = useState('FRANKLIN-A');
-  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   // Google Setup State for first-time Google users
   const [googleSetupState, setGoogleSetupState] = useState(null);
@@ -44,6 +49,15 @@ const Auth = () => {
       navigate('/dashboard');
     }
   }, [user, navigate]);
+
+  // Resend OTP countdown timer
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => setResendCooldown((prev) => prev - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   // Handle Email + Password Sign In
   const handleLoginSubmit = async (e) => {
@@ -64,16 +78,20 @@ const Auth = () => {
     }
   };
 
-  // Handle Email + Password Sign Up
-  const handleSignupSubmit = async (e) => {
+  // Step 1: Send OTP to Email via Brevo API
+  const handleRequestOTP = async (e) => {
     e.preventDefault();
     setError('');
     setUserAlreadyExists(false);
     setIsLoading(true);
 
     try {
-      const res = await emailRegister(signupName, signupEmail, signupPassword, signupGender, signupHostel);
-      if (!res.success) {
+      const res = await sendOTP(signupEmail);
+      if (res.success) {
+        setOtpSentMsg(res.message || '6-digit OTP code sent via Brevo!');
+        setIsOtpStep(true);
+        setResendCooldown(60);
+      } else {
         setError(res.message);
         if (res.message && res.message.toLowerCase().includes('already exists')) {
           setUserAlreadyExists(true);
@@ -81,13 +99,65 @@ const Auth = () => {
         }
       }
     } catch (err) {
-      setError(err.message || 'Registration failed.');
+      setError(err.message || 'Failed to send OTP code.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle 1-Click Google OAuth Success (Verifies Email Address via Google)
+  // Step 2: Verify OTP and Register User
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    if (!otpCode || otpCode.trim().length !== 6) {
+      setError('Please enter a valid 6-digit OTP code.');
+      return;
+    }
+
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const res = await verifyOTP(
+        signupEmail,
+        otpCode.trim(),
+        signupName,
+        signupPassword,
+        signupGender,
+        signupHostel
+      );
+
+      if (!res.success) {
+        setError(res.message);
+      }
+    } catch (err) {
+      setError(err.message || 'OTP verification failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Resend OTP handler
+  const handleResendOTP = async () => {
+    if (resendCooldown > 0) return;
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const res = await sendOTP(signupEmail);
+      if (res.success) {
+        setOtpSentMsg('New 6-digit OTP code sent via Brevo!');
+        setResendCooldown(60);
+      } else {
+        setError(res.message);
+      }
+    } catch (err) {
+      setError('Failed to resend OTP.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle 1-Click Google OAuth Success
   const handleGoogleSuccess = async (credentialResponse) => {
     setError('');
     setUserAlreadyExists(false);
@@ -96,10 +166,6 @@ const Auth = () => {
     try {
       const res = await googleAuth(credentialResponse.credential);
       if (res.requiresProfileDetails) {
-        setSignupName(res.name || '');
-        setSignupEmail(res.email || '');
-        setIsEmailVerified(true);
-
         setGoogleSetupState({
           credential: credentialResponse.credential,
           email: res.email,
@@ -150,6 +216,7 @@ const Auth = () => {
 
   const switchMode = (mode) => {
     setAuthMode(mode);
+    setIsOtpStep(false);
     setError('');
     setUserAlreadyExists(false);
   };
@@ -178,21 +245,25 @@ const Auth = () => {
           <h2 className="heading-lg">
             {googleSetupState 
               ? 'Complete Profile' 
-              : authMode === 'login' 
-                ? 'Welcome Back to HostelAdda' 
-                : 'Join HostelAdda'}
+              : isOtpStep
+                ? 'Verify Email OTP'
+                : authMode === 'login' 
+                  ? 'Welcome Back to HostelAdda' 
+                  : 'Join HostelAdda'}
           </h2>
           <p className="text-body">
             {googleSetupState
               ? 'Select your Gender & Hostel Block to complete setup'
-              : authMode === 'login'
-                ? 'Sign in to access hostel rooms and peer chat'
-                : 'Create an account with email & Google verification'}
+              : isOtpStep
+                ? `Enter the 6-digit code sent to ${signupEmail}`
+                : authMode === 'login'
+                  ? 'Sign in to access hostel rooms and peer chat'
+                  : 'Create an account with Brevo Email OTP verification'}
           </p>
         </div>
 
         {/* Tab Switcher (Sign In vs Sign Up) */}
-        {!googleSetupState && (
+        {!googleSetupState && !isOtpStep && (
           <div className="auth-tabs mb-4">
             <button
               className={`auth-tab ${authMode === 'login' ? 'active' : ''}`}
@@ -209,7 +280,7 @@ const Auth = () => {
           </div>
         )}
 
-        {/* Error Alert with Quick Switch to Login */}
+        {/* Error Alert */}
         {error && (
           <div style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.25)', padding: '0.85rem 1rem', borderRadius: '10px', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
             <div>{error}</div>
@@ -223,6 +294,13 @@ const Auth = () => {
                 Log In Now with Email & Password
               </button>
             )}
+          </div>
+        )}
+
+        {/* Success Alert for OTP Sent */}
+        {otpSentMsg && isOtpStep && !error && (
+          <div style={{ color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '1.25rem', fontSize: '0.85rem', textAlign: 'center' }}>
+            {otpSentMsg}
           </div>
         )}
 
@@ -288,9 +366,49 @@ const Auth = () => {
               {isLoading ? 'Completing Setup...' : 'Enter HostelAdda'}
             </button>
           </form>
+        ) : isOtpStep ? (
+          /* STEP 2: BREVO EMAIL OTP VERIFICATION FORM */
+          <form onSubmit={handleVerifyOTP} className="auth-form">
+            <div className="back-link mb-2" onClick={() => setIsOtpStep(false)}>
+              <ArrowLeft size={16} /> Edit Signup Details
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">6-Digit Verification OTP Code</label>
+              <div className="input-with-icon">
+                <KeyRound size={18} className="input-icon" />
+                <input
+                  type="text"
+                  className="input-field w-100"
+                  placeholder="e.g. 584920"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  required
+                  maxLength={6}
+                  style={{ letterSpacing: '4px', fontWeight: 'bold', fontSize: '1.1rem' }}
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary w-100 mt-3" disabled={isLoading || otpCode.length !== 6}>
+              {isLoading ? 'Verifying OTP...' : 'Verify & Complete Sign Up'}
+            </button>
+
+            <div className="flex-between mt-3 text-small">
+              <span style={{ color: 'var(--text-secondary)' }}>Didn't receive email?</span>
+              <button
+                type="button"
+                className="btn-resend"
+                onClick={handleResendOTP}
+                disabled={resendCooldown > 0 || isLoading}
+              >
+                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP via Brevo'}
+              </button>
+            </div>
+          </form>
         ) : (
           <div>
-            {/* 1-CLICK GOOGLE SSO / EMAIL VERIFICATION BUTTON */}
+            {/* 1-CLICK GOOGLE SSO BUTTON */}
             <div className="google-sso-wrapper">
               <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
                 <GoogleLogin
@@ -306,7 +424,7 @@ const Auth = () => {
               </div>
 
               <div style={{ fontSize: '0.775rem', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'center', justifyContent: 'center', marginTop: '0.25rem' }}>
-                <ShieldCheck size={15} /> 1-Click Instant Email Verification via Google
+                <ShieldCheck size={15} /> 1-Click Instant Sign In via Google
               </div>
             </div>
 
@@ -362,8 +480,8 @@ const Auth = () => {
                 </div>
               </form>
             ) : (
-              /* SIGN UP FORM WITH GOOGLE EMAIL VERIFICATION */
-              <form onSubmit={handleSignupSubmit} className="auth-form mt-3">
+              /* STEP 1: SIGN UP FORM WITH BREVO EMAIL OTP VERIFICATION */
+              <form onSubmit={handleRequestOTP} className="auth-form mt-3">
                 <div className="input-group">
                   <label className="input-label">Full Name</label>
                   <div className="input-with-icon">
@@ -380,14 +498,7 @@ const Auth = () => {
                 </div>
 
                 <div className="input-group">
-                  <div className="flex-between">
-                    <label className="input-label">Email Address</label>
-                    {isEmailVerified && (
-                      <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                        <Check size={12} /> Verified via Google
-                      </span>
-                    )}
-                  </div>
+                  <label className="input-label">Email Address</label>
                   <div className="input-with-icon">
                     <Mail size={18} className="input-icon" />
                     <input
@@ -395,10 +506,7 @@ const Auth = () => {
                       className="input-field w-100"
                       placeholder="name@example.com"
                       value={signupEmail}
-                      onChange={(e) => {
-                        setSignupEmail(e.target.value);
-                        setIsEmailVerified(false);
-                      }}
+                      onChange={(e) => setSignupEmail(e.target.value)}
                       required
                     />
                   </div>
@@ -463,7 +571,7 @@ const Auth = () => {
                 </div>
 
                 <button type="submit" className="btn btn-primary w-100 mt-4" disabled={isLoading}>
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
+                  {isLoading ? 'Sending Brevo OTP...' : <><Send size={16} /> Send Email Verification OTP</>}
                 </button>
 
                 <div className="auth-footer text-center">

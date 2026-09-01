@@ -1,6 +1,8 @@
 const User = require('../models/User');
+const OTP = require('../models/OTP');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
+const { sendBrevoOTP } = require('../utils/sendBrevoEmail');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -8,7 +10,96 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'secret123', { expiresIn: '30d' });
 };
 
-// @desc    Register a new user with Email + Password
+// @desc    Send 6-digit OTP to user email via Brevo
+// @route   POST /api/auth/send-otp
+const sendOTP = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email address is required.' });
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+
+  try {
+    const userExists = await User.findOne({ email: cleanEmail });
+    if (userExists) {
+      return res.status(400).json({
+        message: 'User already exists with this email. Please log in with your password or Google.'
+      });
+    }
+
+    // Generate 6-digit numeric OTP code
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Delete any previous OTP records for this email and save new one
+    await OTP.deleteMany({ email: cleanEmail });
+    await OTP.create({ email: cleanEmail, otp: otpCode });
+
+    // Send email via Brevo API
+    const emailResult = await sendBrevoOTP(cleanEmail, otpCode);
+
+    if (emailResult.success) {
+      res.status(200).json({ message: 'OTP sent to your email.' });
+    } else {
+      res.status(500).json({ message: emailResult.message || 'Failed to send OTP email.' });
+    }
+  } catch (error) {
+    console.error('sendOTP Error:', error);
+    res.status(500).json({ message: error.message || 'Failed to send OTP code.' });
+  }
+};
+
+// @desc    Verify 6-digit OTP and complete Sign Up
+// @route   POST /api/auth/verify-otp
+const verifyOTPAndRegister = async (req, res) => {
+  const { email, otp, name, password, gender, hostelBlock } = req.body;
+
+  if (!email || !otp || !name || !password) {
+    return res.status(400).json({ message: 'Please provide email, OTP code, name, and password.' });
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+
+  try {
+    const otpRecord = await OTP.findOne({ email: cleanEmail, otp: otp.trim() });
+
+    if (!otpRecord) {
+      return res.status(400).json({ message: 'Invalid or expired OTP code. Please request a new code.' });
+    }
+
+    const userExists = await User.findOne({ email: cleanEmail });
+    if (userExists) {
+      await OTP.deleteMany({ email: cleanEmail });
+      return res.status(400).json({ message: 'User already exists. Please log in.' });
+    }
+
+    const user = await User.create({
+      name: name.trim(),
+      email: cleanEmail,
+      password: password,
+      gender: gender || 'Male',
+      hostelBlock: hostelBlock || 'FRANKLIN-A'
+    });
+
+    // Delete verified OTP record
+    await OTP.deleteMany({ email: cleanEmail });
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      gender: user.gender,
+      hostelBlock: user.hostelBlock,
+      token: generateToken(user._id)
+    });
+  } catch (error) {
+    console.error('verifyOTP Error:', error);
+    res.status(500).json({ message: error.message || 'Verification failed.' });
+  }
+};
+
+// @desc    Register a new user directly with Email + Password
 // @route   POST /api/auth/register
 const registerUser = async (req, res) => {
   const { name, email, password, gender, hostelBlock } = req.body;
@@ -33,7 +124,7 @@ const registerUser = async (req, res) => {
       email: cleanEmail,
       password: password,
       gender: gender || 'Male',
-      hostelBlock: hostelBlock || 'Franklin-A'
+      hostelBlock: hostelBlock || 'FRANKLIN-A'
     });
 
     if (user) {
@@ -167,4 +258,10 @@ const googleLogin = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, googleLogin };
+module.exports = {
+  sendOTP,
+  verifyOTPAndRegister,
+  registerUser,
+  loginUser,
+  googleLogin
+};

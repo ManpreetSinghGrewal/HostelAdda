@@ -53,6 +53,41 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const sendOTP = async (email) => {
+    try {
+      const { data } = await axios.post(`${API_URL}/api/auth/send-otp`, { email }, { timeout: 15000 });
+      return { success: true, message: data.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to send OTP email.'
+      };
+    }
+  };
+
+  const verifyOTP = async (email, otp, name, password, gender, hostelBlock) => {
+    try {
+      const { data } = await axios.post(`${API_URL}/api/auth/verify-otp`, {
+        email,
+        otp,
+        name,
+        password,
+        gender,
+        hostelBlock
+      }, { timeout: 15000 });
+
+      setUser(data);
+      localStorage.setItem('userInfo', JSON.stringify(data));
+      navigate('/dashboard');
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'OTP verification failed.'
+      };
+    }
+  };
+
   const emailRegister = async (name, email, password, gender, hostelBlock) => {
     try {
       const { data } = await axios.post(`${API_URL}/api/auth/register`, {
@@ -113,7 +148,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, logout, updateProfile, googleAuth, emailRegister, emailLogin }}>
+    <AuthContext.Provider value={{ user, logout, updateProfile, googleAuth, sendOTP, verifyOTP, emailRegister, emailLogin }}>
       {children}
     </AuthContext.Provider>
   );
